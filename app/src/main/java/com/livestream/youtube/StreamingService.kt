@@ -12,7 +12,6 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.pedro.library.rtmp.RtmpDisplay
-import com.pedro.library.base.recording.RecordController
 
 class StreamingService : Service() {
 
@@ -37,14 +36,37 @@ class StreamingService : Service() {
                 }
                 startForeground(NOTIFICATION_ID, createNotification())
                 startStreaming()
+                
+                // Iniciar o Widget Flutuante
+                startService(Intent(this, FloatingControlService::class.java))
             }
             ACTION_STOP -> {
                 stopStreaming()
                 stopForeground(STOP_FOREGROUND_REMOVE)
+                // Parar o Widget
+                stopService(Intent(this, FloatingControlService::class.java))
                 stopSelf()
+            }
+            ACTION_MUTE -> {
+                val shouldMute = intent.getBooleanExtra("mute", false)
+                handleMute(shouldMute)
             }
         }
         return START_NOT_STICKY
+    }
+
+    private fun handleMute(isMuted: Boolean) {
+        rtmpDisplay?.let { display ->
+            if (display.isStreaming) {
+                if (isMuted) {
+                    display.disableAudio()
+                    Log.d(TAG, "Áudio Mutado")
+                } else {
+                    display.enableAudio()
+                    Log.d(TAG, "Áudio Ativado")
+                }
+            }
+        }
     }
 
     private fun startStreaming() {
@@ -52,7 +74,6 @@ class StreamingService : Service() {
         val streamKey = prefs.getString("stream_key", "") ?: ""
         val rtmpUrl = prefs.getString("rtmp_url", "rtmp://a.rtmp.youtube.com/live2") ?: ""
         
-        // Configurações de vídeo
         val videoPrefs = getSharedPreferences("video_settings", Context.MODE_PRIVATE)
         val width = videoPrefs.getInt("width", 1280)
         val height = videoPrefs.getInt("height", 720)
@@ -61,57 +82,47 @@ class StreamingService : Service() {
         val audioBitrate = videoPrefs.getInt("audio_bitrate", 128) * 1000
         val sampleRate = videoPrefs.getInt("sample_rate", 44100)
 
-        // Obter DPI da tela
+        // IMPORTANTE: Obter DPI real da tela para corrigir o crash de densidade
         val dpi = resources.displayMetrics.densityDpi
 
         try {
             rtmpDisplay = RtmpDisplay(this, true, object : com.pedro.common.ConnectChecker {
-                override fun onConnectionStarted(url: String) {
-                    Log.d(TAG, "Conexão iniciada: $url")
+                override fun onConnectionStarted(url: String) { 
+                    Log.d(TAG, "Conexão iniciada: $url") 
                 }
-
-                override fun onConnectionSuccess() {
-                    Log.d(TAG, "Conectado com sucesso!")
+                override fun onConnectionSuccess() { 
+                    Log.d(TAG, "Conectado com sucesso!") 
                     isRunning = true
+                    // Habilitar bitrate adaptativo para evitar quedas se a net oscilar
+                    rtmpDisplay?.enableBitrateAdapter(true)
                 }
-
-                override fun onConnectionFailed(reason: String) {
+                override fun onConnectionFailed(reason: String) { 
                     Log.e(TAG, "Falha na conexão: $reason")
-                    stopStreaming()
+                    stopStreaming() 
                 }
-
-                override fun onNewBitrate(bitrate: Long) {
-                    Log.d(TAG, "Novo bitrate: $bitrate")
-                }
-
-                override fun onDisconnect() {
-                    Log.d(TAG, "Desconectado")
+                override fun onNewBitrate(bitrate: Long) {}
+                override fun onDisconnect() { 
+                    Log.d(TAG, "Desconectado") 
                     isRunning = false
                 }
-
-                override fun onAuthError() {
-                    Log.e(TAG, "Erro de autenticação")
-                }
-
-                override fun onAuthSuccess() {
-                    Log.d(TAG, "Autenticação bem-sucedida")
-                }
+                override fun onAuthError() { Log.e(TAG, "Erro de autenticação") }
+                override fun onAuthSuccess() { Log.d(TAG, "Autenticação OK") }
             })
 
             rtmpDisplay?.let { display ->
-                // 1. Configurar Intent do MediaProjection (Crítico ser o primeiro passo)
+                // 1. Configurar Intent do MediaProjection PRIMEIRO
                 data?.let { intentData ->
                     display.setIntentResult(resultCode, intentData)
                 }
 
-                // 2. Preparar vídeo
-                // Assinatura típica: prepareVideo(width, height, fps, bitrate, rotation, dpi)
-                // Usamos rotation = 0 e passamos o dpi do sistema
+                // 2. Preparar vídeo com o DPI correto
                 val prepareVideo = display.prepareVideo(
                     width, height, fps, videoBitrate, 0, dpi
                 )
                 
-                // 3. Preparar áudio interno
+                // 3. Preparar áudio
+                // Android 10+ (Q): Tenta áudio interno.
+                // Android 9 ou menor: Usa microfone.
                 val prepareAudio = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     display.prepareInternalAudio(audioBitrate, sampleRate, true)
                 } else {
@@ -127,7 +138,7 @@ class StreamingService : Service() {
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Erro ao iniciar streaming", e)
+            Log.e(TAG, "Erro fatal ao iniciar streaming", e)
             stopStreaming()
         }
     }
@@ -144,6 +155,8 @@ class StreamingService : Service() {
             }
             rtmpDisplay = null
             isRunning = false
+            // Parar Widget ao parar a stream
+            stopService(Intent(this, FloatingControlService::class.java))
         } catch (e: Exception) {
             Log.e(TAG, "Erro ao parar streaming", e)
         }
@@ -159,9 +172,7 @@ class StreamingService : Service() {
                 description = "Notificação de transmissão ao vivo"
                 setShowBadge(false)
             }
-            
-            val notificationManager = getSystemService(NotificationManager::class.java)
-            notificationManager.createNotificationChannel(channel)
+            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }
     }
 
@@ -202,11 +213,11 @@ class StreamingService : Service() {
         const val TAG = "StreamingService"
         const val ACTION_START = "com.livestream.youtube.START"
         const val ACTION_STOP = "com.livestream.youtube.STOP"
+        const val ACTION_MUTE = "com.livestream.youtube.MUTE"
         const val EXTRA_RESULT_CODE = "result_code"
         const val EXTRA_DATA = "data"
         const val CHANNEL_ID = "streaming_channel"
         const val NOTIFICATION_ID = 1
-        
         var isRunning = false
     }
 }
