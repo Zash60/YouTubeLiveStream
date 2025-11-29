@@ -1,32 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000"
-    android:gravity="center"
-    android:orientation="vertical">
+    android:background="#F2000000"
+    android:clickable="true"
+    android:focusable="true">
 
+    <!-- Container Central -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp">
+
+        <!-- Ícone de Cadeado/Pausa -->
+        <ImageView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:src="@android:drawable/ic_lock_idle_lock"
+            android:tint="#FF0000"
+            android:layout_marginBottom="24dp"
+            android:contentDescription="Bloqueado" />
+
+        <!-- Texto Principal -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="INTERVALO"
+            android:textColor="#FFFFFF"
+            android:textSize="36sp"
+            android:letterSpacing="0.1"
+            android:textStyle="bold"
+            android:textAllCaps="true"
+            android:shadowColor="#FF0000"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="20" />
+
+        <!-- Subtexto -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="A transmissão retornará em breve..."
+            android:textColor="#CCCCCC"
+            android:textSize="18sp"
+            android:gravity="center" />
+            
+        <!-- Loading Spinner -->
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:indeterminate="true"
+            android:indeterminateTint="#FF0000"/>
+
+    </LinearLayout>
+    
+    <!-- Rodapé -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="☕"
-        android:textSize="80sp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="JÁ VOLTO"
-        android:textColor="#FFFFFF"
-        android:textSize="32sp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="50dp"
+        android:text="YouTube Live Stream"
+        android:textColor="#444444"
+        android:textSize="14sp"
         android:textStyle="bold" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="A transmissão está pausada"
-        android:textColor="#AAAAAA"
-        android:textSize="16sp" />
-
-</LinearLayout>
+</RelativeLayout>
