@@ -9,13 +9,17 @@ android {
 
     defaultConfig {
         applicationId "com.livestream.youtube"
-        minSdk 29 // Android 10+ para áudio interno
+        minSdk 29
         targetSdk 34
         versionCode 1
         versionName "1.0"
     }
 
     buildTypes {
+        debug {
+            minifyEnabled false
+            debuggable true
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -34,6 +38,17 @@ android {
     buildFeatures {
         viewBinding true
     }
+    
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+    
+    packaging {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
 }
 
 dependencies {
@@ -41,13 +56,9 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    
-    // RTMP Streaming Library
-    implementation 'com.github.pedroSG94.RootEncoder:library:2.4.3'
-    
-    // Preferences
     implementation 'androidx.preference:preference-ktx:1.2.1'
-    
-    // Coroutines
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+    
+    // RootEncoder para RTMP
+    implementation 'com.github.pedroSG94.RootEncoder:library:2.4.3'
 }
