@@ -1,57 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content">
 
-    <!-- Layout Expandido (Menu) -->
+    <!-- Menu Expandido (Fica "atrás" visualmente do botão principal) -->
     <LinearLayout
         android:id="@+id/layout_menu"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="#99000000"
-        android:padding="8dp"
+        android:background="@drawable/edit_text_background"
+        android:backgroundTint="#E61a1a2e"
+        android:paddingStart="16dp"
+        android:paddingEnd="60dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
         android:visibility="gone"
         android:gravity="center_vertical"
-        android:layout_marginEnd="60dp">
+        android:layout_gravity="center_vertical"
+        android:layout_marginEnd="28dp"
+        android:animateLayoutChanges="true">
 
-        <!-- Botão Privacidade (NOVO) -->
+        <!-- Botão Privacidade -->
         <ImageView
             android:id="@+id/btn_privacy"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:src="@android:drawable/ic_menu_view"
-            android:layout_marginEnd="16dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Privacidade" />
+            android:layout_marginEnd="24dp"
+            android:contentDescription="Privacidade"
+            app:tint="#FFFFFF"
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
 
+        <!-- Botão Mute -->
         <ImageView
             android:id="@+id/btn_mute"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:src="@android:drawable/ic_lock_silent_mode_off"
-            android:layout_marginEnd="16dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Mutar" />
+            android:layout_marginEnd="24dp"
+            android:contentDescription="Mutar"
+            app:tint="#FFFFFF"
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
 
+        <!-- Botão Parar -->
         <ImageView
             android:id="@+id/btn_stop"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:src="@android:drawable/ic_menu_close_clear_cancel"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Parar" />
+            android:contentDescription="Parar Stream"
+            app:tint="#FF0000"
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
     </LinearLayout>
 
-    <!-- Botão Principal -->
+    <!-- Botão Principal Flutuante -->
     <ImageView
         android:id="@+id/img_floating_icon"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="center_vertical|end"
         android:src="@android:drawable/ic_menu_camera"
         android:background="@drawable/bg_circle_red"
-        android:padding="12dp"
-        android:elevation="10dp"
-        android:contentDescription="Controle" />
+        android:padding="14dp"
+        android:elevation="8dp"
+        app:tint="#FFFFFF"
+        android:contentDescription="Abrir Menu" />
 
 </FrameLayout>
