@@ -36,13 +36,17 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         
-        <!-- usesCleartextTraffic="true" é essencial para conexões RTMP não criptografadas -->
+        <!-- usesCleartextTraffic="true" é essencial para conexões RTMP -->
 
         <!-- Atividade Principal -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"
+            android:windowSoftInputMode="adjustResize">
+            <!-- configChanges: IMPEDE que o app reinicie ao virar a tela -->
+            
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -57,7 +61,7 @@
             android:parentActivityName=".MainActivity" />
 
         <!-- Serviço de Streaming (Core) -->
-        <!-- foregroundServiceType é OBRIGATÓRIO aqui -->
+        <!-- foregroundServiceType é OBRIGATÓRIO para Android 10+ -->
         <service
             android:name=".StreamingService"
             android:enabled="true"
