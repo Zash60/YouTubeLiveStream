@@ -10,6 +10,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -39,9 +40,7 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.StartActivityForResult()
     ) {
         if (hasOverlayPermission()) {
-            Toast.makeText(this, "Permissão de Widget concedida!", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, "Permissão de Widget necessária para o controle flutuante", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Permissão concedida!", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -54,15 +53,24 @@ class MainActivity : AppCompatActivity() {
             as MediaProjectionManager
 
         setupUI()
+        setupOrientationSpinner() // NOVO
         checkPermissions()
         loadSavedSettings()
+    }
+
+    // NOVO: Configura o Spinner de Orientação
+    private fun setupOrientationSpinner() {
+        val options = arrayOf("Automático (Detectar)", "Deitado (Paisagem/Jogos)", "Em Pé (Retrato)")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, options)
+        binding.spinnerOrientation.adapter = adapter
+        // Padrão: Deitado (index 1) pois é o mais comum para jogos
+        binding.spinnerOrientation.setSelection(1)
     }
 
     private fun setupUI() {
         binding.btnStartStream.setOnClickListener {
             if (!isStreaming) {
                 if (validateInputs()) {
-                    // Verificar permissão de sobreposição antes de iniciar
                     if (checkAndRequestOverlayPermission()) {
                         saveSettings()
                         requestScreenCapture()
@@ -132,10 +140,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkPermissions() {
-        val permissions = mutableListOf(
-            Manifest.permission.RECORD_AUDIO
-        )
-        
+        val permissions = mutableListOf(Manifest.permission.RECORD_AUDIO)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.POST_NOTIFICATIONS)
         }
@@ -145,11 +150,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (permissionsToRequest.isNotEmpty()) {
-            ActivityCompat.requestPermissions(
-                this,
-                permissionsToRequest.toTypedArray(),
-                1001
-            )
+            ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), 1001)
         }
     }
 
@@ -158,18 +159,25 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startStreamingService(resultCode: Int, data: Intent) {
+        // Pega a opção selecionada no Spinner
+        val selectedOrientationIndex = binding.spinnerOrientation.selectedItemPosition
+        val orientationMode = when (selectedOrientationIndex) {
+            1 -> "LANDSCAPE" // Deitado
+            2 -> "PORTRAIT"  // Em pé
+            else -> "AUTO"
+        }
+
         val serviceIntent = Intent(this, StreamingService::class.java).apply {
             action = StreamingService.ACTION_START
             putExtra(StreamingService.EXTRA_RESULT_CODE, resultCode)
             putExtra(StreamingService.EXTRA_DATA, data)
+            putExtra("orientation_mode", orientationMode) // Envia para o serviço
         }
         
         ContextCompat.startForegroundService(this, serviceIntent)
         
         isStreaming = true
         updateUI()
-        
-        // Minimizar app para mostrar gameplay
         moveTaskToBack(true)
     }
 
@@ -185,22 +193,16 @@ class MainActivity : AppCompatActivity() {
     private fun updateUI() {
         if (isStreaming) {
             binding.btnStartStream.text = "⏹ Parar Transmissão"
-            binding.btnStartStream.setBackgroundColor(
-                ContextCompat.getColor(this, android.R.color.holo_red_dark)
-            )
+            binding.btnStartStream.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_red_dark))
             binding.statusText.text = "🔴 AO VIVO"
-            binding.statusText.setTextColor(
-                ContextCompat.getColor(this, android.R.color.holo_red_light)
-            )
+            binding.statusText.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_light))
+            binding.spinnerOrientation.isEnabled = false // Trava a mudança durante a live
         } else {
             binding.btnStartStream.text = "▶ Iniciar Transmissão"
-            binding.btnStartStream.setBackgroundColor(
-                ContextCompat.getColor(this, android.R.color.holo_red_light)
-            )
+            binding.btnStartStream.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_red_light))
             binding.statusText.text = "⚫ Offline"
-            binding.statusText.setTextColor(
-                ContextCompat.getColor(this, android.R.color.darker_gray)
-            )
+            binding.statusText.setTextColor(ContextCompat.getColor(this, android.R.color.darker_gray))
+            binding.spinnerOrientation.isEnabled = true
         }
     }
 
