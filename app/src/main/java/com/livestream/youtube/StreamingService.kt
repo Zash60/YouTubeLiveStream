@@ -15,7 +15,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.pedro.library.rtmp.RtmpDisplay
 import com.pedro.common.ConnectChecker
-// CORREÇÃO: 'object' entre crases porque é palavra reservada no Kotlin
+// Importação corrigida com crases para 'object'
 import com.pedro.encoder.input.gl.render.filters.`object`.ImageObjectFilterRender
 import com.pedro.encoder.utils.gl.TranslateTo
 import com.pedro.encoder.input.gl.render.filters.NoFilterRender
@@ -117,11 +117,14 @@ class StreamingService : Service() {
                                 imageFilter?.setScale(100f, 100f) // Tela cheia
                                 imageFilter?.setPosition(TranslateTo.CENTER)
                             }
-                            // Aplica o filtro de imagem
-                            display.glInterface.setFilter(imageFilter)
+                            
+                            // CORREÇÃO: Usando 'let' para garantir que não é nulo ao passar para setFilter
+                            imageFilter?.let { filter ->
+                                display.glInterface.setFilter(filter)
+                            }
                             Log.d(TAG, "Privacy ON: Image Overlay")
                         } else {
-                            // Se não tiver imagem, usa tela preta (método sem argumentos)
+                            // Se não tiver imagem, usa tela preta
                             display.glInterface.muteVideo()
                             Log.d(TAG, "Privacy ON: Black Screen")
                         }
