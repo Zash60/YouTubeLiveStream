@@ -43,7 +43,6 @@ class StreamingService : Service() {
                 startForeground(NOTIFICATION_ID, createNotification())
                 startStreaming()
                 
-                // Iniciar o Widget Flutuante
                 try {
                     startService(Intent(this, FloatingControlService::class.java))
                 } catch (e: Exception) {
@@ -53,7 +52,6 @@ class StreamingService : Service() {
             ACTION_STOP -> {
                 stopStreaming()
                 stopForeground(STOP_FOREGROUND_REMOVE)
-                // Parar o Widget
                 stopService(Intent(this, FloatingControlService::class.java))
                 stopSelf()
             }
@@ -93,7 +91,6 @@ class StreamingService : Service() {
         val sampleRate = videoPrefs.getInt("sample_rate", 44100)
         useAdaptiveBitrate = videoPrefs.getBoolean("adaptive_bitrate", true)
 
-        // Obter DPI real da tela
         val dpi = resources.displayMetrics.densityDpi
 
         try {
@@ -110,7 +107,6 @@ class StreamingService : Service() {
                     stopStreaming() 
                 }
                 override fun onNewBitrate(bitrate: Long) {
-                    // Lógica Manual de Bitrate Adaptativo
                     if (useAdaptiveBitrate && isRunning) {
                         handleAdaptiveBitrate(bitrate)
                     }
@@ -124,27 +120,22 @@ class StreamingService : Service() {
             })
 
             rtmpDisplay?.let { display ->
-                // 1. Configurar Intent do MediaProjection
                 data?.let { intentData ->
                     display.setIntentResult(resultCode, intentData)
                 }
 
-                // 2. Preparar vídeo
                 val prepareVideo = display.prepareVideo(
                     width, height, fps, targetVideoBitrate, 0, dpi
                 )
                 
-                // 3. Preparar áudio com fallback (Segurança)
                 var prepareAudio = false
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     try {
-                        // Tenta áudio interno (stereo, sem echo cancel, sem noise suppress)
                         prepareAudio = display.prepareInternalAudio(
                             audioBitrate, sampleRate, true, false, false
                         )
                     } catch (e: Exception) {
                         Log.e(TAG, "Falha ao iniciar áudio interno, tentando microfone", e)
-                        // Fallback para microfone se áudio interno falhar
                         prepareAudio = display.prepareAudio(audioBitrate, sampleRate, true)
                     }
                 } else {
@@ -166,20 +157,17 @@ class StreamingService : Service() {
     }
 
     private fun handleAdaptiveBitrate(currentBitrate: Long) {
-        // Evita mudanças bruscas muito frequentes (apenas a cada 2 segundos)
         val now = System.currentTimeMillis()
         if (now - lastBitrateChange < 2000) return
 
         rtmpDisplay?.let { display ->
             try {
-                // Se a velocidade de upload cair abaixo de 70% do alvo, reduz a qualidade
                 if (currentBitrate < targetVideoBitrate * 0.7) {
-                    val newBitrate = (targetVideoBitrate * 0.8).toInt() // Reduz para 80%
+                    val newBitrate = (targetVideoBitrate * 0.8).toInt()
                     display.setVideoBitrateOnFly(newBitrate)
                     Log.d(TAG, "Adaptativo: Reduzindo bitrate para ${newBitrate/1000}kbps")
                     lastBitrateChange = now
                 } 
-                // Se a conexão estiver boa (acima de 90%), tenta voltar ao original
                 else if (currentBitrate > targetVideoBitrate * 0.9) {
                      display.setVideoBitrateOnFly(targetVideoBitrate)
                      lastBitrateChange = now
