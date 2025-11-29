@@ -38,7 +38,11 @@ class StreamingService : Service() {
                 startStreaming()
                 
                 // Iniciar o Widget Flutuante
-                startService(Intent(this, FloatingControlService::class.java))
+                try {
+                    startService(Intent(this, FloatingControlService::class.java))
+                } catch (e: Exception) {
+                    Log.e(TAG, "Erro ao iniciar Widget", e)
+                }
             }
             ACTION_STOP -> {
                 stopStreaming()
@@ -93,8 +97,6 @@ class StreamingService : Service() {
                 override fun onConnectionSuccess() { 
                     Log.d(TAG, "Conectado com sucesso!") 
                     isRunning = true
-                    // Habilitar bitrate adaptativo para evitar quedas se a net oscilar
-                    rtmpDisplay?.enableBitrateAdapter(true)
                 }
                 override fun onConnectionFailed(reason: String) { 
                     Log.e(TAG, "Falha na conexão: $reason")
@@ -121,8 +123,6 @@ class StreamingService : Service() {
                 )
                 
                 // 3. Preparar áudio
-                // Android 10+ (Q): Tenta áudio interno.
-                // Android 9 ou menor: Usa microfone.
                 val prepareAudio = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     display.prepareInternalAudio(audioBitrate, sampleRate, true)
                 } else {
