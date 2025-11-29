@@ -20,7 +20,7 @@ class StreamingService : Service() {
     private var resultCode: Int = 0
     private var data: Intent? = null
     
-    // Variáveis para controle de bitrate
+    // Controle de Bitrate
     private var useAdaptiveBitrate = true
     private var targetVideoBitrate = 4000 * 1000
     private var lastBitrateChange = 0L
@@ -46,7 +46,7 @@ class StreamingService : Service() {
                 try {
                     startService(Intent(this, FloatingControlService::class.java))
                 } catch (e: Exception) {
-                    Log.e(TAG, "Erro ao iniciar Widget", e)
+                    Log.e(TAG, "Error starting widget", e)
                 }
             }
             ACTION_STOP -> {
@@ -55,23 +55,51 @@ class StreamingService : Service() {
                 stopService(Intent(this, FloatingControlService::class.java))
                 stopSelf()
             }
-            ACTION_MUTE -> {
+            ACTION_MUTE_AUDIO -> {
                 val shouldMute = intent.getBooleanExtra("mute", false)
-                handleMute(shouldMute)
+                handleAudioMute(shouldMute)
+            }
+            // AÇÃO NOVA: Alternar Modo Privacidade (Tela Preta)
+            ACTION_PRIVACY_MODE -> {
+                val isPrivacyOn = intent.getBooleanExtra("privacy", false)
+                handlePrivacyMode(isPrivacyOn)
             }
         }
         return START_NOT_STICKY
     }
 
-    private fun handleMute(isMuted: Boolean) {
+    private fun handleAudioMute(isMuted: Boolean) {
         rtmpDisplay?.let { display ->
             if (display.isStreaming) {
                 if (isMuted) {
                     display.disableAudio()
-                    Log.d(TAG, "Áudio Mutado")
                 } else {
                     display.enableAudio()
-                    Log.d(TAG, "Áudio Ativado")
+                }
+            }
+        }
+    }
+
+    // Lógica da Tela Preta
+    private fun handlePrivacyMode(isPrivacyOn: Boolean) {
+        rtmpDisplay?.let { display ->
+            if (display.isStreaming) {
+                try {
+                    // muteVideo(true) = Envia frames pretos para a live
+                    // muteVideo(false) = Volta a capturar a tela
+                    display.glInterface.muteVideo(isPrivacyOn)
+                    
+                    if (isPrivacyOn) {
+                        Log.d(TAG, "Privacy ON: Streaming Black Screen")
+                        // Muta o áudio também para segurança total
+                        display.disableAudio() 
+                    } else {
+                        Log.d(TAG, "Privacy OFF: Streaming Screen")
+                        // Desmuta o áudio ao voltar
+                        display.enableAudio()
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error toggling privacy", e)
                 }
             }
         }
@@ -96,14 +124,14 @@ class StreamingService : Service() {
         try {
             rtmpDisplay = RtmpDisplay(this, true, object : ConnectChecker {
                 override fun onConnectionStarted(url: String) { 
-                    Log.d(TAG, "Conexão iniciada: $url") 
+                    Log.d(TAG, "Connection started") 
                 }
                 override fun onConnectionSuccess() { 
-                    Log.d(TAG, "Conectado com sucesso!") 
+                    Log.d(TAG, "Connected successfully") 
                     isRunning = true
                 }
                 override fun onConnectionFailed(reason: String) { 
-                    Log.e(TAG, "Falha na conexão: $reason")
+                    Log.e(TAG, "Connection failed: $reason")
                     stopStreaming() 
                 }
                 override fun onNewBitrate(bitrate: Long) {
@@ -112,11 +140,11 @@ class StreamingService : Service() {
                     }
                 }
                 override fun onDisconnect() { 
-                    Log.d(TAG, "Desconectado") 
+                    Log.d(TAG, "Disconnected") 
                     isRunning = false
                 }
-                override fun onAuthError() { Log.e(TAG, "Erro de autenticação") }
-                override fun onAuthSuccess() { Log.d(TAG, "Autenticação OK") }
+                override fun onAuthError() { Log.e(TAG, "Auth Error") }
+                override fun onAuthSuccess() { Log.d(TAG, "Auth Success") }
             })
 
             rtmpDisplay?.let { display ->
@@ -135,7 +163,6 @@ class StreamingService : Service() {
                             audioBitrate, sampleRate, true, false, false
                         )
                     } catch (e: Exception) {
-                        Log.e(TAG, "Falha ao iniciar áudio interno, tentando microfone", e)
                         prepareAudio = display.prepareAudio(audioBitrate, sampleRate, true)
                     }
                 } else {
@@ -144,14 +171,11 @@ class StreamingService : Service() {
 
                 if (prepareVideo && prepareAudio) {
                     display.startStream("$rtmpUrl/$streamKey")
-                    Log.d(TAG, "Streaming iniciado: ${width}x${height} @ ${targetVideoBitrate/1000}kbps")
                 } else {
-                    Log.e(TAG, "Falha ao preparar encoder. Video: $prepareVideo, Audio: $prepareAudio")
                     stopStreaming()
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Erro fatal ao iniciar streaming", e)
             stopStreaming()
         }
     }
@@ -165,7 +189,6 @@ class StreamingService : Service() {
                 if (currentBitrate < targetVideoBitrate * 0.7) {
                     val newBitrate = (targetVideoBitrate * 0.8).toInt()
                     display.setVideoBitrateOnFly(newBitrate)
-                    Log.d(TAG, "Adaptativo: Reduzindo bitrate para ${newBitrate/1000}kbps")
                     lastBitrateChange = now
                 } 
                 else if (currentBitrate > targetVideoBitrate * 0.9) {
@@ -173,7 +196,7 @@ class StreamingService : Service() {
                      lastBitrateChange = now
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Erro ao ajustar bitrate", e)
+                Log.e(TAG, "Bitrate error", e)
             }
         }
     }
@@ -181,18 +204,14 @@ class StreamingService : Service() {
     private fun stopStreaming() {
         try {
             rtmpDisplay?.let { display ->
-                if (display.isStreaming) {
-                    display.stopStream()
-                }
-                if (display.isRecording) {
-                    display.stopRecord()
-                }
+                if (display.isStreaming) display.stopStream()
+                if (display.isRecording) display.stopRecord()
             }
             rtmpDisplay = null
             isRunning = false
             stopService(Intent(this, FloatingControlService::class.java))
         } catch (e: Exception) {
-            Log.e(TAG, "Erro ao parar streaming", e)
+            Log.e(TAG, "Error stopping", e)
         }
     }
 
@@ -202,10 +221,7 @@ class StreamingService : Service() {
                 CHANNEL_ID,
                 "YouTube Live Stream",
                 NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Notificação de transmissão ao vivo"
-                setShowBadge(false)
-            }
+            )
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }
     }
@@ -219,20 +235,12 @@ class StreamingService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val openIntent = Intent(this, MainActivity::class.java)
-        val openPendingIntent = PendingIntent.getActivity(
-            this, 0, openIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("🔴 Transmitindo ao vivo")
-            .setContentText("Toque para abrir o app")
+            .setContentTitle("🔴 Live Streaming")
+            .setContentText("Tap to open")
             .setSmallIcon(android.R.drawable.ic_menu_camera)
-            .setContentIntent(openPendingIntent)
-            .addAction(android.R.drawable.ic_media_pause, "Parar", stopPendingIntent)
+            .addAction(android.R.drawable.ic_media_pause, "Stop", stopPendingIntent)
             .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
     }
 
@@ -247,7 +255,8 @@ class StreamingService : Service() {
         const val TAG = "StreamingService"
         const val ACTION_START = "com.livestream.youtube.START"
         const val ACTION_STOP = "com.livestream.youtube.STOP"
-        const val ACTION_MUTE = "com.livestream.youtube.MUTE"
+        const val ACTION_MUTE_AUDIO = "com.livestream.youtube.MUTE_AUDIO"
+        const val ACTION_PRIVACY_MODE = "com.livestream.youtube.PRIVACY_MODE"
         const val EXTRA_RESULT_CODE = "result_code"
         const val EXTRA_DATA = "data"
         const val CHANNEL_ID = "streaming_channel"
