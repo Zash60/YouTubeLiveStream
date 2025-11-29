@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <!-- Layout Expandido (Menu de opções) -->
+    <LinearLayout
+        android:id="@+id/layout_menu"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#99000000"
+        android:padding="8dp"
+        android:visibility="gone"
+        android:gravity="center_vertical"
+        android:layout_marginEnd="60dp">
+
+        <ImageView
+            android:id="@+id/btn_mute"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_lock_silent_mode_off"
+            android:layout_marginEnd="16dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Mutar" />
+
+        <ImageView
+            android:id="@+id/btn_stop"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Parar" />
+    </LinearLayout>
+
+    <!-- Botão Principal (Bolinha Vermelha) -->
+    <ImageView
+        android:id="@+id/img_floating_icon"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:src="@android:drawable/ic_menu_camera"
+        android:background="@drawable/bg_circle_red"
+        android:padding="12dp"
+        android:elevation="10dp"
+        android:contentDescription="Controle" />
+
+</FrameLayout>
