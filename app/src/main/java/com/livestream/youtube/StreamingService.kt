@@ -11,11 +11,8 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.pedro.encoder.input.audio.GetMicrophoneData
-import com.pedro.library.base.recording.RecordController
 import com.pedro.library.rtmp.RtmpDisplay
-import com.pedro.library.util.streamclient.RtmpStreamClient
-import com.pedro.encoder.utils.CodecUtil
+import com.pedro.library.base.recording.RecordController
 
 class StreamingService : Service() {
 
@@ -112,12 +109,13 @@ class StreamingService : Service() {
                 }
 
                 if (prepareVideo && prepareAudio) {
-                    display.startStream("$rtmpUrl/$streamKey")
-                    
-                    // Iniciar captura de tela
+                    // Configurar Intent de captura de tela antes de iniciar o stream
                     data?.let { intentData ->
-                        display.startRecord(resultCode, intentData)
+                        display.setIntentResult(resultCode, intentData)
                     }
+                    
+                    // Iniciar Stream
+                    display.startStream("$rtmpUrl/$streamKey")
                     
                     Log.d(TAG, "Streaming iniciado!")
                 } else {
