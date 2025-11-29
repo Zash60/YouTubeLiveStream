@@ -8,33 +8,42 @@ import android.os.IBinder
 import android.view.*
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.view.ContextThemeWrapper // Importação necessária para corrigir o erro de tema
+import android.view.ContextThemeWrapper
 
 class FloatingControlService : Service() {
 
     private lateinit var windowManager: WindowManager
     private lateinit var floatingView: View
+    private lateinit var privacyView: View // View da tela preta
+    
     private lateinit var layoutParams: WindowManager.LayoutParams
+    private lateinit var privacyParams: WindowManager.LayoutParams
     
     private var isMenuExpanded = false
     private var isMuted = false
+    private var isPrivacyOn = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        setupFloatingView()
+        
+        // Contexto com tema para evitar crash de inflação
+        val contextThemeWrapper = ContextThemeWrapper(this, R.style.Theme_YouTubeLiveStream)
+        val inflater = LayoutInflater.from(contextThemeWrapper)
+
+        // 1. Inflar o Widget Flutuante
+        floatingView = inflater.inflate(R.layout.widget_floating_control, null)
+        
+        // 2. Inflar a Tela de Privacidade (mas não adicionar ainda)
+        privacyView = inflater.inflate(R.layout.layout_privacy_mode, null)
+
+        setupLayoutParams()
+        setupViews()
     }
 
-    private fun setupFloatingView() {
-        // CORREÇÃO: Criar um Contexto com Tema para que atributos como 
-        // "?attr/selectableItemBackgroundBorderless" funcionem no XML.
-        val contextThemeWrapper = ContextThemeWrapper(this, R.style.Theme_YouTubeLiveStream)
-        
-        // Usar o LayoutInflater a partir desse contexto com tema
-        floatingView = LayoutInflater.from(contextThemeWrapper).inflate(R.layout.widget_floating_control, null)
-
+    private fun setupLayoutParams() {
         val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
         } else {
@@ -42,6 +51,7 @@ class FloatingControlService : Service() {
             WindowManager.LayoutParams.TYPE_PHONE
         }
 
+        // Params do Widget (Pequeno)
         layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -49,24 +59,38 @@ class FloatingControlService : Service() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         )
-
-        // Posição inicial (Topo Esquerdo)
         layoutParams.gravity = Gravity.TOP or Gravity.START
         layoutParams.x = 0
         layoutParams.y = 200
 
-        setupTouchListener()
-        setupClickListeners()
+        // Params da Tela de Privacidade (Tela Cheia)
+        privacyParams = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT,
+            layoutFlag,
+            // FLAG_NOT_FOCUSABLE permite que botões do sistema (voltar/home) ainda funcionem,
+            // mas bloqueia toques no jogo atrás da tela preta.
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or 
+            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            PixelFormat.TRANSLUCENT
+        )
+    }
 
+    private fun setupViews() {
+        // Adicionar o Widget na tela
         try {
             windowManager.addView(floatingView, layoutParams)
         } catch (e: Exception) {
             e.printStackTrace()
         }
+
+        setupTouchListener()
+        setupClickListeners()
     }
 
     private fun setupClickListeners() {
         val menuLayout = floatingView.findViewById<LinearLayout>(R.id.layout_menu)
+        val btnPrivacy = floatingView.findViewById<ImageView>(R.id.btn_privacy)
         val btnMute = floatingView.findViewById<ImageView>(R.id.btn_mute)
         val btnStop = floatingView.findViewById<ImageView>(R.id.btn_stop)
         val mainIcon = floatingView.findViewById<ImageView>(R.id.img_floating_icon)
@@ -75,6 +99,11 @@ class FloatingControlService : Service() {
         mainIcon.setOnClickListener {
             isMenuExpanded = !isMenuExpanded
             menuLayout.visibility = if (isMenuExpanded) View.VISIBLE else View.GONE
+        }
+
+        // Ação de Privacidade (NOVO)
+        btnPrivacy.setOnClickListener {
+            togglePrivacy(btnPrivacy)
         }
 
         // Ação de Mutar
@@ -86,20 +115,56 @@ class FloatingControlService : Service() {
             }
             startService(intent)
             
-            // Atualizar ícone visualmente
             btnMute.setImageResource(
                 if (isMuted) android.R.drawable.ic_lock_silent_mode 
                 else android.R.drawable.ic_lock_silent_mode_off
             )
         }
 
-        // Ação de Parar Stream
+        // Ação de Parar
         btnStop.setOnClickListener {
             val intent = Intent(this, StreamingService::class.java).apply {
                 action = StreamingService.ACTION_STOP
             }
             startService(intent)
-            stopSelf() // Fecha este widget
+            stopSelf()
+        }
+    }
+
+    private fun togglePrivacy(btnPrivacy: ImageView) {
+        isPrivacyOn = !isPrivacyOn
+
+        if (isPrivacyOn) {
+            // Ativar: Adiciona a view de tela cheia
+            try {
+                windowManager.addView(privacyView, privacyParams)
+                // Opcional: Mudar ícone para indicar "Fechado"
+                btnPrivacy.setImageResource(android.R.drawable.ic_secure)
+                
+                // DICA: Geralmente quando se esconde a tela, também se muta o áudio.
+                // Se quiser mutar automático, descomente abaixo:
+                /*
+                if (!isMuted) {
+                    val intent = Intent(this, StreamingService::class.java).apply {
+                        action = StreamingService.ACTION_MUTE
+                        putExtra("mute", true)
+                    }
+                    startService(intent)
+                }
+                */
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        } else {
+            // Desativar: Remove a view
+            try {
+                windowManager.removeView(privacyView)
+                btnPrivacy.setImageResource(android.R.drawable.ic_menu_view)
+                
+                // Se mutou automático, desmutar aqui
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -133,16 +198,13 @@ class FloatingControlService : Service() {
                         val dx = (event.rawX - initialTouchX).toInt()
                         val dy = (event.rawY - initialTouchY).toInt()
 
-                        // Considera arrasto se moveu mais que 10 pixels
                         if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
                             isDragging = true
                             layoutParams.x = initialX + dx
                             layoutParams.y = initialY + dy
                             try {
                                 windowManager.updateViewLayout(floatingView, layoutParams)
-                            } catch (e: Exception) {
-                                // View removida
-                            }
+                            } catch (e: Exception) {}
                         }
                         return true
                     }
@@ -154,12 +216,16 @@ class FloatingControlService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        if (::floatingView.isInitialized) {
-            try {
+        // Limpar todas as views ao destruir
+        try {
+            if (::floatingView.isInitialized && floatingView.windowToken != null) {
                 windowManager.removeView(floatingView)
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
+            if (::privacyView.isInitialized && privacyView.windowToken != null) {
+                windowManager.removeView(privacyView)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }
