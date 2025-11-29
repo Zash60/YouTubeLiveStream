@@ -15,14 +15,11 @@ class FloatingControlService : Service() {
 
     private lateinit var windowManager: WindowManager
     private lateinit var floatingView: View
-    private lateinit var privacyView: View
-    
     private lateinit var layoutParams: WindowManager.LayoutParams
-    private lateinit var privacyParams: WindowManager.LayoutParams
     
     private var isMenuExpanded = false
     private var isMuted = false
-    private var isPrivacyOn = false
+    private var isPrivacyOn = false // Controla a tela preta na live
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -33,8 +30,8 @@ class FloatingControlService : Service() {
         val contextThemeWrapper = ContextThemeWrapper(this, R.style.Theme_YouTubeLiveStream)
         val inflater = LayoutInflater.from(contextThemeWrapper)
 
+        // Apenas inflamos o widget flutuante. Não usamos mais overlay de tela cheia.
         floatingView = inflater.inflate(R.layout.widget_floating_control, null)
-        privacyView = inflater.inflate(R.layout.layout_privacy_mode, null)
 
         setupLayoutParams()
         setupViews()
@@ -48,7 +45,6 @@ class FloatingControlService : Service() {
             WindowManager.LayoutParams.TYPE_PHONE
         }
 
-        // Params do Widget (Pequeno e interativo)
         layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -59,20 +55,6 @@ class FloatingControlService : Service() {
         layoutParams.gravity = Gravity.TOP or Gravity.START
         layoutParams.x = 20
         layoutParams.y = 200
-
-        // Params da Tela de Privacidade ("Já Volto")
-        // ALTERAÇÃO IMPORTANTE: Adicionado FLAG_NOT_TOUCHABLE
-        // Isso permite que você toque "através" da tela preta para mexer no celular
-        privacyParams = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.MATCH_PARENT,
-            layoutFlag,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or // <--- PERMITE TOCAR NO CELULAR
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                    WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
-            PixelFormat.TRANSLUCENT
-        )
     }
 
     private fun setupViews() {
@@ -95,44 +77,24 @@ class FloatingControlService : Service() {
         val btnStop = floatingView.findViewById<ImageView>(R.id.btn_stop)
         val mainIcon = floatingView.findViewById<ImageView>(R.id.img_floating_icon)
 
+        // 1. Abrir/Fechar Menu
         mainIcon.setOnClickListener {
-            isMenuExpanded = !isMenuExpanded
-            menuLayout.visibility = if (isMenuExpanded) View.VISIBLE else View.GONE
-            mainIcon.setImageResource(
-                if (isMenuExpanded) android.R.drawable.ic_menu_close_clear_cancel 
-                else android.R.drawable.ic_menu_camera
-            )
-            mainIcon.background.setTint(if (isMenuExpanded) 0xFF444444.toInt() else 0xFFFF0000.toInt())
+            toggleMenu(menuLayout, mainIcon)
         }
 
+        // 2. Botão Privacidade (Gera Tela Preta na Live)
         btnPrivacy.setOnClickListener {
-            togglePrivacy(btnPrivacy)
-            // Fecha o menu, mas mantém o ícone visível para desativar depois
-            if (isMenuExpanded) {
-                isMenuExpanded = false
-                menuLayout.visibility = View.GONE
-                mainIcon.setImageResource(android.R.drawable.ic_menu_camera)
-                // Mantém o ícone vermelho se estiver gravando, ou cinza se pausado? 
-                // Vamos deixar vermelho padrão
-                mainIcon.background.setTint(0xFFFF0000.toInt())
-            }
+            togglePrivacy(btnPrivacy, mainIcon)
+            // Fecha o menu após clicar
+            if (isMenuExpanded) toggleMenu(menuLayout, mainIcon)
         }
 
+        // 3. Botão Mutar
         btnMute.setOnClickListener {
-            isMuted = !isMuted
-            val intent = Intent(this, StreamingService::class.java).apply {
-                action = StreamingService.ACTION_MUTE
-                putExtra("mute", isMuted)
-            }
-            startService(intent)
-            
-            btnMute.setImageResource(
-                if (isMuted) android.R.drawable.ic_lock_silent_mode 
-                else android.R.drawable.ic_lock_silent_mode_off
-            )
-            btnMute.setColorFilter(if(isMuted) 0xFFFF0000.toInt() else 0xFFFFFFFF.toInt())
+            toggleMute(btnMute)
         }
 
+        // 4. Botão Parar
         btnStop.setOnClickListener {
             val intent = Intent(this, StreamingService::class.java).apply {
                 action = StreamingService.ACTION_STOP
@@ -142,47 +104,79 @@ class FloatingControlService : Service() {
         }
     }
 
-    private fun togglePrivacy(btnPrivacy: ImageView) {
+    private fun toggleMenu(menuLayout: LinearLayout, mainIcon: ImageView) {
+        isMenuExpanded = !isMenuExpanded
+        menuLayout.visibility = if (isMenuExpanded) View.VISIBLE else View.GONE
+        
+        // Altera o ícone principal dependendo do estado
+        mainIcon.setImageResource(
+            if (isMenuExpanded) android.R.drawable.ic_menu_close_clear_cancel 
+            else if (isPrivacyOn) android.R.drawable.ic_secure // Cadeado se estiver em privacidade
+            else android.R.drawable.ic_menu_camera
+        )
+        
+        // Fundo preto se privacidade on, vermelho se off
+        mainIcon.background.setTint(
+            if (isMenuExpanded) 0xFF444444.toInt() 
+            else if (isPrivacyOn) 0xFF000000.toInt() 
+            else 0xFFFF0000.toInt()
+        )
+    }
+
+    private fun togglePrivacy(btnPrivacy: ImageView, mainIcon: ImageView) {
         isPrivacyOn = !isPrivacyOn
 
-        if (isPrivacyOn) {
-            try {
-                // Adiciona a view de privacidade
-                windowManager.addView(privacyView, privacyParams)
-                
-                // TRUQUE: Remove e readiciona o botão flutuante para ele ficar POR CIMA da tela preta
-                // Assim você consegue clicar para tirar o modo privacidade depois
-                windowManager.removeView(floatingView)
-                windowManager.addView(floatingView, layoutParams)
-
-                if (!isMuted) {
-                    val intent = Intent(this, StreamingService::class.java).apply {
-                        action = StreamingService.ACTION_MUTE
-                        putExtra("mute", true)
-                    }
-                    startService(intent)
-                }
-                btnPrivacy.setColorFilter(0xFFFF0000.toInt())
-            } catch (e: Exception) { e.printStackTrace() }
-        } else {
-            try {
-                windowManager.removeView(privacyView)
-                btnPrivacy.setColorFilter(0xFFFFFFFF.toInt())
-                
-                // Ao voltar, desmuta automaticamente (opcional)
-                if (!isMuted) { 
-                    val intent = Intent(this, StreamingService::class.java).apply {
-                        action = StreamingService.ACTION_MUTE
-                        putExtra("mute", false)
-                    }
-                    startService(intent)
-                }
-            } catch (e: Exception) { e.printStackTrace() }
+        // Envia comando para o serviço fazer a tela ficar preta
+        val intent = Intent(this, StreamingService::class.java).apply {
+            action = StreamingService.ACTION_PRIVACY_MODE
+            putExtra("privacy", isPrivacyOn)
         }
+        startService(intent)
+
+        // Atualiza UI
+        if (isPrivacyOn) {
+            // Privacidade Ligada: Ícone Vermelho
+            btnPrivacy.setColorFilter(0xFFFF0000.toInt())
+            
+            // UI Update: Muta o ícone de áudio (o serviço já muta o som real)
+            val btnMute = floatingView.findViewById<ImageView>(R.id.btn_mute)
+            isMuted = true
+            btnMute.setImageResource(android.R.drawable.ic_lock_silent_mode)
+            btnMute.setColorFilter(0xFFFF0000.toInt())
+        } else {
+            // Privacidade Desligada: Ícone Branco
+            btnPrivacy.setColorFilter(0xFFFFFFFF.toInt())
+            
+            // Restaura ícone principal
+            mainIcon.setImageResource(android.R.drawable.ic_menu_camera)
+            mainIcon.background.setTint(0xFFFF0000.toInt())
+            
+            // Desmuta ícone
+            val btnMute = floatingView.findViewById<ImageView>(R.id.btn_mute)
+            isMuted = false
+            btnMute.setImageResource(android.R.drawable.ic_lock_silent_mode_off)
+            btnMute.setColorFilter(0xFFFFFFFF.toInt())
+        }
+    }
+
+    private fun toggleMute(btnMute: ImageView) {
+        isMuted = !isMuted
+        val intent = Intent(this, StreamingService::class.java).apply {
+            action = StreamingService.ACTION_MUTE_AUDIO
+            putExtra("mute", isMuted)
+        }
+        startService(intent)
+        
+        btnMute.setImageResource(
+            if (isMuted) android.R.drawable.ic_lock_silent_mode 
+            else android.R.drawable.ic_lock_silent_mode_off
+        )
+        btnMute.setColorFilter(if(isMuted) 0xFFFF0000.toInt() else 0xFFFFFFFF.toInt())
     }
 
     private fun setupTouchListener() {
         val mainIcon = floatingView.findViewById<ImageView>(R.id.img_floating_icon)
+        
         mainIcon.setOnTouchListener(object : View.OnTouchListener {
             private var initialX = 0
             private var initialY = 0
@@ -210,6 +204,7 @@ class FloatingControlService : Service() {
                     MotionEvent.ACTION_MOVE -> {
                         val dx = (event.rawX - initialTouchX).toInt()
                         val dy = (event.rawY - initialTouchY).toInt()
+
                         if (Math.abs(dx) > touchSlop || Math.abs(dy) > touchSlop) {
                             isDragging = true
                             layoutParams.x = initialX + dx
@@ -229,8 +224,11 @@ class FloatingControlService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         try {
-            if (::floatingView.isInitialized && floatingView.windowToken != null) windowManager.removeView(floatingView)
-            if (::privacyView.isInitialized && privacyView.windowToken != null) windowManager.removeView(privacyView)
-        } catch (e: Exception) { e.printStackTrace() }
+            if (::floatingView.isInitialized && floatingView.windowToken != null) {
+                windowManager.removeView(floatingView)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 }
