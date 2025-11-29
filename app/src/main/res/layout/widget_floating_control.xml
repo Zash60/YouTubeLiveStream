@@ -3,7 +3,7 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content">
 
-    <!-- Layout Expandido (Menu de opções) -->
+    <!-- Layout Expandido (Menu) -->
     <LinearLayout
         android:id="@+id/layout_menu"
         android:layout_width="wrap_content"
@@ -14,6 +14,16 @@
         android:visibility="gone"
         android:gravity="center_vertical"
         android:layout_marginEnd="60dp">
+
+        <!-- Botão Privacidade (NOVO) -->
+        <ImageView
+            android:id="@+id/btn_privacy"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_menu_view"
+            android:layout_marginEnd="16dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Privacidade" />
 
         <ImageView
             android:id="@+id/btn_mute"
@@ -33,7 +43,7 @@
             android:contentDescription="Parar" />
     </LinearLayout>
 
-    <!-- Botão Principal (Bolinha Vermelha) -->
+    <!-- Botão Principal -->
     <ImageView
         android:id="@+id/img_floating_icon"
         android:layout_width="60dp"
