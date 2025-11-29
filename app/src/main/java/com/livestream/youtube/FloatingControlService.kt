@@ -30,7 +30,6 @@ class FloatingControlService : Service() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         
-        // Usar ContextThemeWrapper para garantir estilos corretos
         val contextThemeWrapper = ContextThemeWrapper(this, R.style.Theme_YouTubeLiveStream)
         val inflater = LayoutInflater.from(contextThemeWrapper)
 
@@ -49,7 +48,6 @@ class FloatingControlService : Service() {
             WindowManager.LayoutParams.TYPE_PHONE
         }
 
-        // Params do Widget (Pequeno e interativo)
         layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -61,7 +59,6 @@ class FloatingControlService : Service() {
         layoutParams.x = 20
         layoutParams.y = 200
 
-        // Params da Tela de Privacidade (Tela cheia, bloqueia toques no app abaixo)
         privacyParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
@@ -86,7 +83,6 @@ class FloatingControlService : Service() {
 
     private fun setupClickListeners() {
         val menuLayout = floatingView.findViewById<LinearLayout>(R.id.layout_menu)
-        // Habilitar animação suave
         menuLayout.layoutTransition = LayoutTransition()
         
         val btnPrivacy = floatingView.findViewById<ImageView>(R.id.btn_privacy)
@@ -94,24 +90,41 @@ class FloatingControlService : Service() {
         val btnStop = floatingView.findViewById<ImageView>(R.id.btn_stop)
         val mainIcon = floatingView.findViewById<ImageView>(R.id.img_floating_icon)
 
-        // 1. Expandir/Recolher Menu
         mainIcon.setOnClickListener {
-            toggleMenu(menuLayout, mainIcon)
+            isMenuExpanded = !isMenuExpanded
+            menuLayout.visibility = if (isMenuExpanded) View.VISIBLE else View.GONE
+            mainIcon.setImageResource(
+                if (isMenuExpanded) android.R.drawable.ic_menu_close_clear_cancel 
+                else android.R.drawable.ic_menu_camera
+            )
+            mainIcon.background.setTint(if (isMenuExpanded) 0xFF444444.toInt() else 0xFFFF0000.toInt())
         }
 
-        // 2. Botão Privacidade ("Já Volto")
         btnPrivacy.setOnClickListener {
             togglePrivacy(btnPrivacy)
-            // Fecha o menu após selecionar
-            if (isMenuExpanded) toggleMenu(menuLayout, mainIcon)
+            if (isMenuExpanded) {
+                isMenuExpanded = false
+                menuLayout.visibility = View.GONE
+                mainIcon.setImageResource(android.R.drawable.ic_menu_camera)
+                mainIcon.background.setTint(0xFFFF0000.toInt())
+            }
         }
 
-        // 3. Botão Mutar
         btnMute.setOnClickListener {
-            toggleMute(btnMute)
+            isMuted = !isMuted
+            val intent = Intent(this, StreamingService::class.java).apply {
+                action = StreamingService.ACTION_MUTE
+                putExtra("mute", isMuted)
+            }
+            startService(intent)
+            
+            btnMute.setImageResource(
+                if (isMuted) android.R.drawable.ic_lock_silent_mode 
+                else android.R.drawable.ic_lock_silent_mode_off
+            )
+            btnMute.setColorFilter(if(isMuted) 0xFFFF0000.toInt() else 0xFFFFFFFF.toInt())
         }
 
-        // 4. Botão Parar
         btnStop.setOnClickListener {
             val intent = Intent(this, StreamingService::class.java).apply {
                 action = StreamingService.ACTION_STOP
@@ -121,65 +134,31 @@ class FloatingControlService : Service() {
         }
     }
 
-    private fun toggleMenu(menuLayout: LinearLayout, mainIcon: ImageView) {
-        isMenuExpanded = !isMenuExpanded
-        menuLayout.visibility = if (isMenuExpanded) View.VISIBLE else View.GONE
-        
-        mainIcon.setImageResource(
-            if (isMenuExpanded) android.R.drawable.ic_menu_close_clear_cancel 
-            else android.R.drawable.ic_menu_camera
-        )
-        
-        // Muda cor do fundo do botão principal
-        mainIcon.background.setTint(
-            if (isMenuExpanded) 0xFF444444.toInt() else 0xFFFF0000.toInt()
-        )
-    }
-
-    private fun toggleMute(btnMute: ImageView, forceMute: Boolean? = null) {
-        isMuted = forceMute ?: !isMuted
-        
-        val intent = Intent(this, StreamingService::class.java).apply {
-            action = StreamingService.ACTION_MUTE
-            putExtra("mute", isMuted)
-        }
-        startService(intent)
-        
-        btnMute.setImageResource(
-            if (isMuted) android.R.drawable.ic_lock_silent_mode 
-            else android.R.drawable.ic_lock_silent_mode_off
-        )
-        
-        // Muda a cor do ícone para vermelho quando mutado
-        btnMute.setColorFilter(if(isMuted) 0xFFFF0000.toInt() else 0xFFFFFFFF.toInt())
-    }
-
     private fun togglePrivacy(btnPrivacy: ImageView) {
         isPrivacyOn = !isPrivacyOn
 
         if (isPrivacyOn) {
-            // ATIVAR PRIVACIDADE
             try {
-                // Adiciona a view de tela cheia
                 windowManager.addView(privacyView, privacyParams)
-                
-                // Muta o áudio automaticamente por segurança
                 if (!isMuted) {
-                    toggleMute(floatingView.findViewById(R.id.btn_mute), true)
+                    val intent = Intent(this, StreamingService::class.java).apply {
+                        action = StreamingService.ACTION_MUTE
+                        putExtra("mute", true)
+                    }
+                    startService(intent)
                 }
-                
-                btnPrivacy.setColorFilter(0xFFFF0000.toInt()) // Ícone vermelho
+                btnPrivacy.setColorFilter(0xFFFF0000.toInt())
             } catch (e: Exception) { e.printStackTrace() }
         } else {
-            // DESATIVAR PRIVACIDADE
             try {
                 windowManager.removeView(privacyView)
-                btnPrivacy.setColorFilter(0xFFFFFFFF.toInt()) // Ícone branco
-                
-                // Opção: Desmutar automaticamente ao voltar (ou manter mutado)
-                // Vamos desmutar para conveniência
-                if (isMuted) {
-                    toggleMute(floatingView.findViewById(R.id.btn_mute), false)
+                btnPrivacy.setColorFilter(0xFFFFFFFF.toInt())
+                if (!isMuted) { // Volta ao estado normal (desmutado) se estava desmutado antes
+                    val intent = Intent(this, StreamingService::class.java).apply {
+                        action = StreamingService.ACTION_MUTE
+                        putExtra("mute", false)
+                    }
+                    startService(intent)
                 }
             } catch (e: Exception) { e.printStackTrace() }
         }
@@ -187,14 +166,13 @@ class FloatingControlService : Service() {
 
     private fun setupTouchListener() {
         val mainIcon = floatingView.findViewById<ImageView>(R.id.img_floating_icon)
-        
         mainIcon.setOnTouchListener(object : View.OnTouchListener {
             private var initialX = 0
             private var initialY = 0
             private var initialTouchX = 0f
             private var initialTouchY = 0f
             private var isDragging = false
-            private val touchSlop = 10 // Sensibilidade do toque
+            private val touchSlop = 10
 
             override fun onTouch(v: View, event: MotionEvent): Boolean {
                 when (event.action) {
@@ -215,8 +193,6 @@ class FloatingControlService : Service() {
                     MotionEvent.ACTION_MOVE -> {
                         val dx = (event.rawX - initialTouchX).toInt()
                         val dy = (event.rawY - initialTouchY).toInt()
-
-                        // Só considera arrastar se moveu mais que o Slop
                         if (Math.abs(dx) > touchSlop || Math.abs(dy) > touchSlop) {
                             isDragging = true
                             layoutParams.x = initialX + dx
@@ -236,14 +212,8 @@ class FloatingControlService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         try {
-            if (::floatingView.isInitialized && floatingView.windowToken != null) {
-                windowManager.removeView(floatingView)
-            }
-            if (::privacyView.isInitialized && privacyView.windowToken != null) {
-                windowManager.removeView(privacyView)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+            if (::floatingView.isInitialized && floatingView.windowToken != null) windowManager.removeView(floatingView)
+            if (::privacyView.isInitialized && privacyView.windowToken != null) windowManager.removeView(privacyView)
+        } catch (e: Exception) { e.printStackTrace() }
     }
 }
