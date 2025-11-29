@@ -96,12 +96,17 @@ class StreamingService : Service() {
             })
 
             rtmpDisplay?.let { display ->
+                // CORREÇÃO: Configurar Intent PRIMEIRO, antes de qualquer preparação
+                data?.let { intentData ->
+                    display.setIntentResult(resultCode, intentData)
+                }
+
                 // Preparar vídeo
                 val prepareVideo = display.prepareVideo(
                     width, height, fps, videoBitrate, 2, 0
                 )
                 
-                // Preparar áudio interno (Android 10+)
+                // Preparar áudio interno (Agora seguro pois o Intent já foi setado)
                 val prepareAudio = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     display.prepareInternalAudio(audioBitrate, sampleRate, true)
                 } else {
@@ -109,21 +114,17 @@ class StreamingService : Service() {
                 }
 
                 if (prepareVideo && prepareAudio) {
-                    // Configurar Intent de captura de tela antes de iniciar o stream
-                    data?.let { intentData ->
-                        display.setIntentResult(resultCode, intentData)
-                    }
-                    
-                    // Iniciar Stream
                     display.startStream("$rtmpUrl/$streamKey")
-                    
                     Log.d(TAG, "Streaming iniciado!")
                 } else {
                     Log.e(TAG, "Falha ao preparar encoder. Video: $prepareVideo, Audio: $prepareAudio")
+                    // Se falhar, pare o serviço para não ficar preso na notificação
+                    stopStreaming()
                 }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Erro ao iniciar streaming", e)
+            stopStreaming()
         }
     }
 
