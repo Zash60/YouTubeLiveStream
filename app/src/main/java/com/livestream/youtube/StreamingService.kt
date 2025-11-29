@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
@@ -15,7 +16,6 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.pedro.library.rtmp.RtmpDisplay
 import com.pedro.common.ConnectChecker
-// Importação corrigida com crases para 'object'
 import com.pedro.encoder.input.gl.render.filters.`object`.ImageObjectFilterRender
 import com.pedro.encoder.utils.gl.TranslateTo
 import com.pedro.encoder.input.gl.render.filters.NoFilterRender
@@ -103,7 +103,6 @@ class StreamingService : Service() {
         }
     }
 
-    // Lógica da Privacidade: Imagem ou Tela Preta
     private fun handlePrivacyMode(isPrivacyOn: Boolean) {
         rtmpDisplay?.let { display ->
             if (display.isStreaming) {
@@ -114,33 +113,32 @@ class StreamingService : Service() {
                             if (imageFilter == null) {
                                 imageFilter = ImageObjectFilterRender()
                                 imageFilter?.setImage(pauseBitmap)
-                                imageFilter?.setScale(100f, 100f) // Tela cheia
                                 imageFilter?.setPosition(TranslateTo.CENTER)
                             }
                             
-                            // CORREÇÃO: Usando 'let' para garantir que não é nulo ao passar para setFilter
+                            // CORREÇÃO CRÍTICA: Forçar a escala 100x100 toda vez que ativa
+                            // Isso garante que cubra a tela mesmo se tiver girado
+                            imageFilter?.setScale(100f, 100f) 
+                            
                             imageFilter?.let { filter ->
                                 display.glInterface.setFilter(filter)
                             }
                             Log.d(TAG, "Privacy ON: Image Overlay")
                         } else {
-                            // Se não tiver imagem, usa tela preta
+                            // Tela preta se não tiver imagem
                             display.glInterface.muteVideo()
                             Log.d(TAG, "Privacy ON: Black Screen")
                         }
                         
-                        // Muta áudio
                         display.disableAudio()
                     } else {
-                        // Remove filtro e volta a imagem normal
+                        // Remove filtro e volta
                         if (pauseBitmap != null) {
                             display.glInterface.setFilter(NoFilterRender())
                         } else {
                             display.glInterface.unMuteVideo()
                         }
                         Log.d(TAG, "Privacy OFF: Screen Visible")
-                        
-                        // Reativa áudio
                         display.enableAudio()
                     }
                 } catch (e: Exception) {
@@ -156,8 +154,27 @@ class StreamingService : Service() {
         val rtmpUrl = prefs.getString("rtmp_url", "rtmp://a.rtmp.youtube.com/live2") ?: ""
         
         val videoPrefs = getSharedPreferences("video_settings", Context.MODE_PRIVATE)
-        val width = videoPrefs.getInt("width", 1280)
-        val height = videoPrefs.getInt("height", 720)
+        var width = videoPrefs.getInt("width", 1280)
+        var height = videoPrefs.getInt("height", 720)
+        
+        // CORREÇÃO DE ORIENTAÇÃO: Ajusta a resolução baseada na rotação atual
+        val orientation = resources.configuration.orientation
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            // Se está deitado, Largura deve ser maior que Altura
+            if (width < height) {
+                val temp = width
+                width = height
+                height = temp
+            }
+        } else {
+            // Se está em pé, Largura deve ser menor que Altura
+            if (width > height) {
+                val temp = width
+                width = height
+                height = temp
+            }
+        }
+
         val fps = videoPrefs.getInt("fps", 30)
         targetVideoBitrate = videoPrefs.getInt("video_bitrate", 4000) * 1000
         val audioBitrate = videoPrefs.getInt("audio_bitrate", 128) * 1000
