@@ -2,14 +2,29 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permissões necessárias -->
+    <!-- 1. Permissões de Rede e Streaming -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- 2. Permissões de Áudio (Microfone/Interno) -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- 3. Permissões de Serviço em Segundo Plano (CRÍTICO) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Necessário para capturar a tela no Android 10+ -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+
+    <!-- 4. Permissão de Notificação (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- Permissão para o Botão Flutuante -->
+
+    <!-- 5. Permissão para o Widget Flutuante -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- 6. Permissões para Selecionar Imagem de "Já Volto" -->
+    <!-- Para Android 13+ (API 33+) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- Para Android 12 e inferiores -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -20,7 +35,10 @@
         android:theme="@style/Theme.YouTubeLiveStream"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
+        
+        <!-- usesCleartextTraffic="true" é essencial para conexões RTMP não criptografadas -->
 
+        <!-- Atividade Principal -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -31,17 +49,22 @@
             </intent-filter>
         </activity>
 
+        <!-- Atividade de Configurações -->
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
-            android:label="@string/settings" />
+            android:label="@string/settings"
+            android:parentActivityName=".MainActivity" />
 
+        <!-- Serviço de Streaming (Core) -->
+        <!-- foregroundServiceType é OBRIGATÓRIO aqui -->
         <service
             android:name=".StreamingService"
-            android:foregroundServiceType="mediaProjection"
-            android:exported="false" />
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
 
-        <!-- Serviço do Botão Flutuante -->
+        <!-- Serviço do Controle Flutuante -->
         <service
             android:name=".FloatingControlService"
             android:enabled="true"
