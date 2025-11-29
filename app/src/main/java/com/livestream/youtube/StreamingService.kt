@@ -13,6 +13,7 @@ import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import android.view.WindowManager
 import androidx.core.app.NotificationCompat
 import com.pedro.library.rtmp.RtmpDisplay
 import com.pedro.common.ConnectChecker
@@ -33,25 +34,13 @@ class StreamingService : Service() {
     private var useAdaptiveBitrate = true
     private var targetVideoBitrate = 4000 * 1000
     private var lastBitrateChange = 0L
-    private var pauseBitmap: Bitmap? = null
-    private var imageFilter: ImageObjectFilterRender? = null
+    
+    // Não mantemos o bitmap em cache global para evitar problemas de rotação/memória
+    // Carregamos na hora que precisa
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-        loadPauseImage()
-    }
-
-    private fun loadPauseImage() {
-        try {
-            val file = File(filesDir, "pause_image.png")
-            if (file.exists()) {
-                pauseBitmap = BitmapFactory.decodeFile(file.absolutePath)
-                Log.d(TAG, "Imagem de pausa carregada")
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Erro ao carregar imagem", e)
-        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -65,7 +54,6 @@ class StreamingService : Service() {
                     intent.getParcelableExtra(EXTRA_DATA)
                 }
                 
-                // Recebe a escolha do usuário (Auto, Portrait, Landscape)
                 orientationMode = intent.getStringExtra("orientation_mode") ?: "AUTO"
                 
                 startForeground(NOTIFICATION_ID, createNotification())
@@ -74,7 +62,7 @@ class StreamingService : Service() {
                 try {
                     startService(Intent(this, FloatingControlService::class.java))
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error starting widget", e)
+                    Log.e(TAG, "Erro ao iniciar widget", e)
                 }
             }
             ACTION_STOP -> {
@@ -108,30 +96,58 @@ class StreamingService : Service() {
             if (display.isStreaming) {
                 try {
                     if (isPrivacyOn) {
-                        if (pauseBitmap != null) {
-                            if (imageFilter == null) {
-                                imageFilter = ImageObjectFilterRender()
-                                imageFilter?.setImage(pauseBitmap)
-                            }
-                            imageFilter?.setScale(100f, 100f)
-                            imageFilter?.setPosition(TranslateTo.CENTER)
-                            imageFilter?.let { display.glInterface.setFilter(it) }
+                        // 1. Tenta carregar a imagem na hora (fresco)
+                        val currentBitmap = loadBitmapFromStorage()
+
+                        if (currentBitmap != null) {
+                            // 2. Cria um novo filtro do zero para garantir a escala correta
+                            val filter = ImageObjectFilterRender()
+                            filter.setImage(currentBitmap)
+                            filter.setScale(100f, 100f) // Força preencher 100% da tela
+                            filter.setPosition(TranslateTo.CENTER)
+                            
+                            display.glInterface.setFilter(filter)
+                            Log.d(TAG, "Privacidade: Imagem aplicada com sucesso")
                         } else {
+                            // 3. FALLBACK: Se a imagem falhar (nula), usa TELA PRETA
+                            // Isso garante que o jogo não apareça se a imagem der erro
+                            Log.e(TAG, "Privacidade: Imagem não encontrada, usando Tela Preta")
                             display.glInterface.muteVideo()
                         }
+                        
+                        // Sempre muta o áudio na privacidade
                         display.disableAudio()
                     } else {
-                        if (pauseBitmap != null) {
-                            display.glInterface.setFilter(NoFilterRender())
-                        } else {
-                            display.glInterface.unMuteVideo()
-                        }
+                        // Desativar Privacidade
+                        // Remove qualquer filtro
+                        display.glInterface.setFilter(NoFilterRender())
+                        // Garante que o vídeo não está mudo (caso tenha caído no fallback)
+                        display.glInterface.unMuteVideo()
+                        
+                        Log.d(TAG, "Privacidade: Desativada")
                         display.enableAudio()
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error toggling privacy", e)
+                    Log.e(TAG, "Erro crítico na privacidade. Forçando tela preta.", e)
+                    // Em caso de erro (crash do filtro), força tela preta
+                    display.glInterface.muteVideo()
+                    display.disableAudio()
                 }
             }
+        }
+    }
+
+    private fun loadBitmapFromStorage(): Bitmap? {
+        return try {
+            val file = File(filesDir, "pause_image.png")
+            if (file.exists()) {
+                BitmapFactory.decodeFile(file.absolutePath)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Erro ao ler arquivo de imagem", e)
+            null
         }
     }
 
@@ -144,16 +160,14 @@ class StreamingService : Service() {
         var width = videoPrefs.getInt("width", 1280)
         var height = videoPrefs.getInt("height", 720)
         
-        // --- LÓGICA DE ORIENTAÇÃO FORÇADA ---
+        // Lógica de Orientação (Mantida a mesma, pois estava correta)
         val systemOrientation = resources.configuration.orientation
         
         when (orientationMode) {
             "LANDSCAPE" -> {
-                // Força Deitado (Largura > Altura)
                 if (width < height) { val t = width; width = height; height = t }
             }
             "PORTRAIT" -> {
-                // Força Em Pé (Altura > Largura)
                 if (width > height) { val t = width; width = height; height = t }
             }
             else -> { // AUTO
