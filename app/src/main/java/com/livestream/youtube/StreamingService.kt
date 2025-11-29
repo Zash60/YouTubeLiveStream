@@ -61,6 +61,9 @@ class StreamingService : Service() {
         val audioBitrate = videoPrefs.getInt("audio_bitrate", 128) * 1000
         val sampleRate = videoPrefs.getInt("sample_rate", 44100)
 
+        // Obter DPI da tela
+        val dpi = resources.displayMetrics.densityDpi
+
         try {
             rtmpDisplay = RtmpDisplay(this, true, object : com.pedro.common.ConnectChecker {
                 override fun onConnectionStarted(url: String) {
@@ -96,17 +99,19 @@ class StreamingService : Service() {
             })
 
             rtmpDisplay?.let { display ->
-                // CORREÇÃO: Configurar Intent PRIMEIRO, antes de qualquer preparação
+                // 1. Configurar Intent do MediaProjection (Crítico ser o primeiro passo)
                 data?.let { intentData ->
                     display.setIntentResult(resultCode, intentData)
                 }
 
-                // Preparar vídeo
+                // 2. Preparar vídeo
+                // Assinatura típica: prepareVideo(width, height, fps, bitrate, rotation, dpi)
+                // Usamos rotation = 0 e passamos o dpi do sistema
                 val prepareVideo = display.prepareVideo(
-                    width, height, fps, videoBitrate, 2, 0
+                    width, height, fps, videoBitrate, 0, dpi
                 )
                 
-                // Preparar áudio interno (Agora seguro pois o Intent já foi setado)
+                // 3. Preparar áudio interno
                 val prepareAudio = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     display.prepareInternalAudio(audioBitrate, sampleRate, true)
                 } else {
@@ -118,7 +123,6 @@ class StreamingService : Service() {
                     Log.d(TAG, "Streaming iniciado!")
                 } else {
                     Log.e(TAG, "Falha ao preparar encoder. Video: $prepareVideo, Audio: $prepareAudio")
-                    // Se falhar, pare o serviço para não ficar preso na notificação
                     stopStreaming()
                 }
             }
