@@ -8,6 +8,7 @@ import android.os.IBinder
 import android.view.*
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.view.ContextThemeWrapper // Importação necessária para corrigir o erro de tema
 
 class FloatingControlService : Service() {
 
@@ -27,7 +28,12 @@ class FloatingControlService : Service() {
     }
 
     private fun setupFloatingView() {
-        floatingView = LayoutInflater.from(this).inflate(R.layout.widget_floating_control, null)
+        // CORREÇÃO: Criar um Contexto com Tema para que atributos como 
+        // "?attr/selectableItemBackgroundBorderless" funcionem no XML.
+        val contextThemeWrapper = ContextThemeWrapper(this, R.style.Theme_YouTubeLiveStream)
+        
+        // Usar o LayoutInflater a partir desse contexto com tema
+        floatingView = LayoutInflater.from(contextThemeWrapper).inflate(R.layout.widget_floating_control, null)
 
         val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -135,7 +141,7 @@ class FloatingControlService : Service() {
                             try {
                                 windowManager.updateViewLayout(floatingView, layoutParams)
                             } catch (e: Exception) {
-                                // View pode ter sido removida
+                                // View removida
                             }
                         }
                         return true
