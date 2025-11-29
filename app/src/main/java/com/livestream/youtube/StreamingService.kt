@@ -7,12 +7,17 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.pedro.library.rtmp.RtmpDisplay
 import com.pedro.common.ConnectChecker
+import com.pedro.encoder.input.gl.render.filters.object.ImageObjectFilterRender
+import com.pedro.encoder.utils.gl.TranslateTo
+import java.io.File
 
 class StreamingService : Service() {
 
@@ -24,10 +29,27 @@ class StreamingService : Service() {
     private var useAdaptiveBitrate = true
     private var targetVideoBitrate = 4000 * 1000
     private var lastBitrateChange = 0L
+    
+    // Imagem de Pausa
+    private var pauseBitmap: Bitmap? = null
+    private var imageFilter: ImageObjectFilterRender? = null
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        loadPauseImage()
+    }
+
+    private fun loadPauseImage() {
+        try {
+            val file = File(filesDir, "pause_image.png")
+            if (file.exists()) {
+                pauseBitmap = BitmapFactory.decodeFile(file.absolutePath)
+                Log.d(TAG, "Imagem de pausa carregada")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Erro ao carregar imagem", e)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -79,21 +101,37 @@ class StreamingService : Service() {
         }
     }
 
-    // CORREÇÃO AQUI: Uso correto de muteVideo() e unMuteVideo() sem argumentos
+    // Lógica da Privacidade: Imagem ou Tela Preta
     private fun handlePrivacyMode(isPrivacyOn: Boolean) {
         rtmpDisplay?.let { display ->
             if (display.isStreaming) {
                 try {
                     if (isPrivacyOn) {
-                        // Ativa tela preta
-                        display.glInterface.muteVideo()
-                        Log.d(TAG, "Privacy ON: Black Screen")
+                        // Se tiver imagem carregada, usa o Filtro
+                        if (pauseBitmap != null) {
+                            if (imageFilter == null) {
+                                imageFilter = ImageObjectFilterRender()
+                                imageFilter?.setImage(pauseBitmap)
+                                imageFilter?.setScale(100f, 100f) // Tela cheia
+                                imageFilter?.setPosition(TranslateTo.CENTER)
+                            }
+                            display.glInterface.setFilter(imageFilter)
+                            Log.d(TAG, "Privacy ON: Image Overlay")
+                        } else {
+                            // Se não tiver imagem, usa tela preta
+                            display.glInterface.muteVideo()
+                            Log.d(TAG, "Privacy ON: Black Screen")
+                        }
                         
                         // Muta áudio
                         display.disableAudio()
                     } else {
-                        // Desativa tela preta (volta a imagem normal)
-                        display.glInterface.unMuteVideo()
+                        // Remove filtro e volta a imagem normal
+                        if (pauseBitmap != null) {
+                            display.glInterface.setFilter(com.pedro.encoder.input.gl.render.filters.NoFilterRender())
+                        } else {
+                            display.glInterface.unMuteVideo()
+                        }
                         Log.d(TAG, "Privacy OFF: Screen Visible")
                         
                         // Reativa áudio
