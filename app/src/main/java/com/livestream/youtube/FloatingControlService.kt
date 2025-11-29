@@ -48,6 +48,7 @@ class FloatingControlService : Service() {
             WindowManager.LayoutParams.TYPE_PHONE
         }
 
+        // Params do Widget (Pequeno e interativo)
         layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -59,11 +60,15 @@ class FloatingControlService : Service() {
         layoutParams.x = 20
         layoutParams.y = 200
 
+        // Params da Tela de Privacidade ("Já Volto")
+        // ALTERAÇÃO IMPORTANTE: Adicionado FLAG_NOT_TOUCHABLE
+        // Isso permite que você toque "através" da tela preta para mexer no celular
         privacyParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
             layoutFlag,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or // <--- PERMITE TOCAR NO CELULAR
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                     WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
             PixelFormat.TRANSLUCENT
@@ -102,10 +107,13 @@ class FloatingControlService : Service() {
 
         btnPrivacy.setOnClickListener {
             togglePrivacy(btnPrivacy)
+            // Fecha o menu, mas mantém o ícone visível para desativar depois
             if (isMenuExpanded) {
                 isMenuExpanded = false
                 menuLayout.visibility = View.GONE
                 mainIcon.setImageResource(android.R.drawable.ic_menu_camera)
+                // Mantém o ícone vermelho se estiver gravando, ou cinza se pausado? 
+                // Vamos deixar vermelho padrão
                 mainIcon.background.setTint(0xFFFF0000.toInt())
             }
         }
@@ -139,7 +147,14 @@ class FloatingControlService : Service() {
 
         if (isPrivacyOn) {
             try {
+                // Adiciona a view de privacidade
                 windowManager.addView(privacyView, privacyParams)
+                
+                // TRUQUE: Remove e readiciona o botão flutuante para ele ficar POR CIMA da tela preta
+                // Assim você consegue clicar para tirar o modo privacidade depois
+                windowManager.removeView(floatingView)
+                windowManager.addView(floatingView, layoutParams)
+
                 if (!isMuted) {
                     val intent = Intent(this, StreamingService::class.java).apply {
                         action = StreamingService.ACTION_MUTE
@@ -153,7 +168,9 @@ class FloatingControlService : Service() {
             try {
                 windowManager.removeView(privacyView)
                 btnPrivacy.setColorFilter(0xFFFFFFFF.toInt())
-                if (!isMuted) { // Volta ao estado normal (desmutado) se estava desmutado antes
+                
+                // Ao voltar, desmuta automaticamente (opcional)
+                if (!isMuted) { 
                     val intent = Intent(this, StreamingService::class.java).apply {
                         action = StreamingService.ACTION_MUTE
                         putExtra("mute", false)
