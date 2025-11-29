@@ -6,8 +6,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.projection.MediaProjectionManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -19,9 +21,9 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var mediaProjectionManager: MediaProjectionManager
-    
     private var isStreaming = false
 
+    // Callback da Captura de Tela
     private val screenCaptureRequest = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -29,6 +31,17 @@ class MainActivity : AppCompatActivity() {
             startStreamingService(result.resultCode, result.data!!)
         } else {
             Toast.makeText(this, "Permissão de captura negada", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Callback da Permissão de Janela Flutuante (Overlay)
+    private val overlayPermissionRequest = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (hasOverlayPermission()) {
+            Toast.makeText(this, "Permissão de Widget concedida!", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Permissão de Widget necessária para o controle flutuante", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -49,8 +62,11 @@ class MainActivity : AppCompatActivity() {
         binding.btnStartStream.setOnClickListener {
             if (!isStreaming) {
                 if (validateInputs()) {
-                    saveSettings()
-                    requestScreenCapture()
+                    // Verificar permissão de sobreposição antes de iniciar
+                    if (checkAndRequestOverlayPermission()) {
+                        saveSettings()
+                        requestScreenCapture()
+                    }
                 }
             } else {
                 stopStreaming()
@@ -70,14 +86,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun hasOverlayPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Settings.canDrawOverlays(this)
+        } else {
+            true
+        }
+    }
+
+    private fun checkAndRequestOverlayPermission(): Boolean {
+        if (!hasOverlayPermission()) {
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName")
+            )
+            overlayPermissionRequest.launch(intent)
+            return false
+        }
+        return true
+    }
+
     private fun validateInputs(): Boolean {
         val streamKey = binding.etStreamKey.text.toString().trim()
-        
         if (streamKey.isEmpty()) {
             binding.etStreamKey.error = "Insira a chave de transmissão"
             return false
         }
-        
         return true
     }
 
@@ -114,7 +148,7 @@ class MainActivity : AppCompatActivity() {
             ActivityCompat.requestPermissions(
                 this,
                 permissionsToRequest.toTypedArray(),
-                PERMISSION_REQUEST_CODE
+                1001
             )
         }
     }
@@ -144,7 +178,6 @@ class MainActivity : AppCompatActivity() {
             action = StreamingService.ACTION_STOP
         }
         startService(serviceIntent)
-        
         isStreaming = false
         updateUI()
     }
@@ -173,12 +206,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Verificar se o serviço está rodando
         isStreaming = StreamingService.isRunning
         updateUI()
-    }
-
-    companion object {
-        private const val PERMISSION_REQUEST_CODE = 1001
     }
 }
