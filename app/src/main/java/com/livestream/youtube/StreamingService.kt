@@ -27,12 +27,12 @@ class StreamingService : Service() {
     private var resultCode: Int = 0
     private var data: Intent? = null
     
-    // Controle de Bitrate
+    // Variável para armazenar a escolha do usuário
+    private var orientationMode = "AUTO"
+
     private var useAdaptiveBitrate = true
     private var targetVideoBitrate = 4000 * 1000
     private var lastBitrateChange = 0L
-    
-    // Imagem de Pausa
     private var pauseBitmap: Bitmap? = null
     private var imageFilter: ImageObjectFilterRender? = null
 
@@ -64,6 +64,10 @@ class StreamingService : Service() {
                     @Suppress("DEPRECATION")
                     intent.getParcelableExtra(EXTRA_DATA)
                 }
+                
+                // Recebe a escolha do usuário (Auto, Portrait, Landscape)
+                orientationMode = intent.getStringExtra("orientation_mode") ?: "AUTO"
+                
                 startForeground(NOTIFICATION_ID, createNotification())
                 startStreaming()
                 
@@ -94,11 +98,7 @@ class StreamingService : Service() {
     private fun handleAudioMute(isMuted: Boolean) {
         rtmpDisplay?.let { display ->
             if (display.isStreaming) {
-                if (isMuted) {
-                    display.disableAudio()
-                } else {
-                    display.enableAudio()
-                }
+                if (isMuted) display.disableAudio() else display.enableAudio()
             }
         }
     }
@@ -108,37 +108,24 @@ class StreamingService : Service() {
             if (display.isStreaming) {
                 try {
                     if (isPrivacyOn) {
-                        // Se tiver imagem carregada, usa o Filtro
                         if (pauseBitmap != null) {
                             if (imageFilter == null) {
                                 imageFilter = ImageObjectFilterRender()
                                 imageFilter?.setImage(pauseBitmap)
-                                imageFilter?.setPosition(TranslateTo.CENTER)
                             }
-                            
-                            // CORREÇÃO CRÍTICA: Forçar a escala 100x100 toda vez que ativa
-                            // Isso garante que cubra a tela mesmo se tiver girado
-                            imageFilter?.setScale(100f, 100f) 
-                            
-                            imageFilter?.let { filter ->
-                                display.glInterface.setFilter(filter)
-                            }
-                            Log.d(TAG, "Privacy ON: Image Overlay")
+                            imageFilter?.setScale(100f, 100f)
+                            imageFilter?.setPosition(TranslateTo.CENTER)
+                            imageFilter?.let { display.glInterface.setFilter(it) }
                         } else {
-                            // Tela preta se não tiver imagem
                             display.glInterface.muteVideo()
-                            Log.d(TAG, "Privacy ON: Black Screen")
                         }
-                        
                         display.disableAudio()
                     } else {
-                        // Remove filtro e volta
                         if (pauseBitmap != null) {
                             display.glInterface.setFilter(NoFilterRender())
                         } else {
                             display.glInterface.unMuteVideo()
                         }
-                        Log.d(TAG, "Privacy OFF: Screen Visible")
                         display.enableAudio()
                     }
                 } catch (e: Exception) {
@@ -157,21 +144,24 @@ class StreamingService : Service() {
         var width = videoPrefs.getInt("width", 1280)
         var height = videoPrefs.getInt("height", 720)
         
-        // CORREÇÃO DE ORIENTAÇÃO: Ajusta a resolução baseada na rotação atual
-        val orientation = resources.configuration.orientation
-        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            // Se está deitado, Largura deve ser maior que Altura
-            if (width < height) {
-                val temp = width
-                width = height
-                height = temp
+        // --- LÓGICA DE ORIENTAÇÃO FORÇADA ---
+        val systemOrientation = resources.configuration.orientation
+        
+        when (orientationMode) {
+            "LANDSCAPE" -> {
+                // Força Deitado (Largura > Altura)
+                if (width < height) { val t = width; width = height; height = t }
             }
-        } else {
-            // Se está em pé, Largura deve ser menor que Altura
-            if (width > height) {
-                val temp = width
-                width = height
-                height = temp
+            "PORTRAIT" -> {
+                // Força Em Pé (Altura > Largura)
+                if (width > height) { val t = width; width = height; height = t }
+            }
+            else -> { // AUTO
+                if (systemOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    if (width < height) { val t = width; width = height; height = t }
+                } else {
+                    if (width > height) { val t = width; width = height; height = t }
+                }
             }
         }
 
@@ -185,45 +175,26 @@ class StreamingService : Service() {
 
         try {
             rtmpDisplay = RtmpDisplay(this, true, object : ConnectChecker {
-                override fun onConnectionStarted(url: String) { 
-                    Log.d(TAG, "Connection started") 
-                }
-                override fun onConnectionSuccess() { 
-                    Log.d(TAG, "Connected successfully") 
-                    isRunning = true
-                }
-                override fun onConnectionFailed(reason: String) { 
-                    Log.e(TAG, "Connection failed: $reason")
-                    stopStreaming() 
-                }
+                override fun onConnectionStarted(url: String) {}
+                override fun onConnectionSuccess() { isRunning = true }
+                override fun onConnectionFailed(reason: String) { stopStreaming() }
                 override fun onNewBitrate(bitrate: Long) {
-                    if (useAdaptiveBitrate && isRunning) {
-                        handleAdaptiveBitrate(bitrate)
-                    }
+                    if (useAdaptiveBitrate && isRunning) handleAdaptiveBitrate(bitrate)
                 }
-                override fun onDisconnect() { 
-                    Log.d(TAG, "Disconnected") 
-                    isRunning = false
-                }
-                override fun onAuthError() { Log.e(TAG, "Auth Error") }
-                override fun onAuthSuccess() { Log.d(TAG, "Auth Success") }
+                override fun onDisconnect() { isRunning = false }
+                override fun onAuthError() {}
+                override fun onAuthSuccess() {}
             })
 
             rtmpDisplay?.let { display ->
-                data?.let { intentData ->
-                    display.setIntentResult(resultCode, intentData)
-                }
+                data?.let { display.setIntentResult(resultCode, it) }
 
-                val prepareVideo = display.prepareVideo(
-                    width, height, fps, targetVideoBitrate, 0, dpi
-                )
+                val prepareVideo = display.prepareVideo(width, height, fps, targetVideoBitrate, 0, dpi)
                 
                 var prepareAudio = false
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     try {
-                        prepareAudio = display.prepareInternalAudio(
-                            audioBitrate, sampleRate, true, false, false
-                        )
+                        prepareAudio = display.prepareInternalAudio(audioBitrate, sampleRate, true, false, false)
                     } catch (e: Exception) {
                         prepareAudio = display.prepareAudio(audioBitrate, sampleRate, true)
                     }
@@ -233,6 +204,7 @@ class StreamingService : Service() {
 
                 if (prepareVideo && prepareAudio) {
                     display.startStream("$rtmpUrl/$streamKey")
+                    Log.d(TAG, "Streaming started: $orientationMode ${width}x${height}")
                 } else {
                     stopStreaming()
                 }
@@ -257,9 +229,7 @@ class StreamingService : Service() {
                      display.setVideoBitrateOnFly(targetVideoBitrate)
                      lastBitrateChange = now
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "Bitrate error", e)
-            }
+            } catch (e: Exception) {}
         }
     }
 
@@ -272,9 +242,7 @@ class StreamingService : Service() {
             rtmpDisplay = null
             isRunning = false
             stopService(Intent(this, FloatingControlService::class.java))
-        } catch (e: Exception) {
-            Log.e(TAG, "Error stopping", e)
-        }
+        } catch (e: Exception) {}
     }
 
     private fun createNotificationChannel() {
