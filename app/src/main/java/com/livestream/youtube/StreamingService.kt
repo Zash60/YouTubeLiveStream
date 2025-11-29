@@ -59,7 +59,6 @@ class StreamingService : Service() {
                 val shouldMute = intent.getBooleanExtra("mute", false)
                 handleAudioMute(shouldMute)
             }
-            // AÇÃO NOVA: Alternar Modo Privacidade (Tela Preta)
             ACTION_PRIVACY_MODE -> {
                 val isPrivacyOn = intent.getBooleanExtra("privacy", false)
                 handlePrivacyMode(isPrivacyOn)
@@ -80,22 +79,24 @@ class StreamingService : Service() {
         }
     }
 
-    // Lógica da Tela Preta
+    // CORREÇÃO AQUI: Uso correto de muteVideo() e unMuteVideo() sem argumentos
     private fun handlePrivacyMode(isPrivacyOn: Boolean) {
         rtmpDisplay?.let { display ->
             if (display.isStreaming) {
                 try {
-                    // muteVideo(true) = Envia frames pretos para a live
-                    // muteVideo(false) = Volta a capturar a tela
-                    display.glInterface.muteVideo(isPrivacyOn)
-                    
                     if (isPrivacyOn) {
-                        Log.d(TAG, "Privacy ON: Streaming Black Screen")
-                        // Muta o áudio também para segurança total
-                        display.disableAudio() 
+                        // Ativa tela preta
+                        display.glInterface.muteVideo()
+                        Log.d(TAG, "Privacy ON: Black Screen")
+                        
+                        // Muta áudio
+                        display.disableAudio()
                     } else {
-                        Log.d(TAG, "Privacy OFF: Streaming Screen")
-                        // Desmuta o áudio ao voltar
+                        // Desativa tela preta (volta a imagem normal)
+                        display.glInterface.unMuteVideo()
+                        Log.d(TAG, "Privacy OFF: Screen Visible")
+                        
+                        // Reativa áudio
                         display.enableAudio()
                     }
                 } catch (e: Exception) {
