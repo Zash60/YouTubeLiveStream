@@ -86,6 +86,10 @@ class SettingsActivity : AppCompatActivity() {
         binding.spinnerSampleRate.setSelection(
             sampleRateOptions.indexOf(sampleRate.toString()).coerceAtLeast(0)
         )
+
+        // Carregar Adaptive Bitrate
+        val adaptiveBitrate = prefs.getBoolean("adaptive_bitrate", true)
+        binding.switchAdaptiveBitrate.isChecked = adaptiveBitrate
     }
 
     private fun setupSaveButton() {
@@ -109,6 +113,7 @@ class SettingsActivity : AppCompatActivity() {
             putInt("video_bitrate", binding.spinnerVideoBitrate.selectedItem.toString().toInt())
             putInt("audio_bitrate", binding.spinnerAudioBitrate.selectedItem.toString().toInt())
             putInt("sample_rate", binding.spinnerSampleRate.selectedItem.toString().toInt())
+            putBoolean("adaptive_bitrate", binding.switchAdaptiveBitrate.isChecked)
             apply()
         }
     }
