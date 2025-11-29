@@ -12,12 +12,18 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.pedro.library.rtmp.RtmpDisplay
+import com.pedro.common.ConnectChecker
 
 class StreamingService : Service() {
 
     private var rtmpDisplay: RtmpDisplay? = null
     private var resultCode: Int = 0
     private var data: Intent? = null
+    
+    // Variáveis para controle de bitrate
+    private var useAdaptiveBitrate = true
+    private var targetVideoBitrate = 4000 * 1000
+    private var lastBitrateChange = 0L
 
     override fun onCreate() {
         super.onCreate()
@@ -82,37 +88,32 @@ class StreamingService : Service() {
         val width = videoPrefs.getInt("width", 1280)
         val height = videoPrefs.getInt("height", 720)
         val fps = videoPrefs.getInt("fps", 30)
-        val videoBitrate = videoPrefs.getInt("video_bitrate", 4000) * 1000
+        targetVideoBitrate = videoPrefs.getInt("video_bitrate", 4000) * 1000
         val audioBitrate = videoPrefs.getInt("audio_bitrate", 128) * 1000
         val sampleRate = videoPrefs.getInt("sample_rate", 44100)
-        val useAdaptiveBitrate = videoPrefs.getBoolean("adaptive_bitrate", true)
+        useAdaptiveBitrate = videoPrefs.getBoolean("adaptive_bitrate", true)
 
         // Obter DPI real da tela
         val dpi = resources.displayMetrics.densityDpi
 
         try {
-            rtmpDisplay = RtmpDisplay(this, true, object : com.pedro.common.ConnectChecker {
+            rtmpDisplay = RtmpDisplay(this, true, object : ConnectChecker {
                 override fun onConnectionStarted(url: String) { 
                     Log.d(TAG, "Conexão iniciada: $url") 
                 }
                 override fun onConnectionSuccess() { 
                     Log.d(TAG, "Conectado com sucesso!") 
                     isRunning = true
-                    
-                    // Configurar Bitrate Adaptativo se ativado
-                    if (useAdaptiveBitrate) {
-                        rtmpDisplay?.enableBitrateAdapter(true)
-                        rtmpDisplay?.setAdaptiveBitrate(true)
-                        Log.d(TAG, "Bitrate Adaptativo Ativado")
-                    }
                 }
                 override fun onConnectionFailed(reason: String) { 
                     Log.e(TAG, "Falha na conexão: $reason")
                     stopStreaming() 
                 }
                 override fun onNewBitrate(bitrate: Long) {
-                    // Opcional: Logar mudança de bitrate se adaptativo
-                    Log.d(TAG, "Bitrate atual: $bitrate")
+                    // Lógica Manual de Bitrate Adaptativo
+                    if (useAdaptiveBitrate && isRunning) {
+                        handleAdaptiveBitrate(bitrate)
+                    }
                 }
                 override fun onDisconnect() { 
                     Log.d(TAG, "Desconectado") 
@@ -130,7 +131,7 @@ class StreamingService : Service() {
 
                 // 2. Preparar vídeo
                 val prepareVideo = display.prepareVideo(
-                    width, height, fps, videoBitrate, 0, dpi
+                    width, height, fps, targetVideoBitrate, 0, dpi
                 )
                 
                 // 3. Preparar áudio com fallback (Segurança)
@@ -152,7 +153,7 @@ class StreamingService : Service() {
 
                 if (prepareVideo && prepareAudio) {
                     display.startStream("$rtmpUrl/$streamKey")
-                    Log.d(TAG, "Streaming iniciado com configurações: ${width}x${height} @ ${videoBitrate/1000}k")
+                    Log.d(TAG, "Streaming iniciado: ${width}x${height} @ ${targetVideoBitrate/1000}kbps")
                 } else {
                     Log.e(TAG, "Falha ao preparar encoder. Video: $prepareVideo, Audio: $prepareAudio")
                     stopStreaming()
@@ -161,6 +162,31 @@ class StreamingService : Service() {
         } catch (e: Exception) {
             Log.e(TAG, "Erro fatal ao iniciar streaming", e)
             stopStreaming()
+        }
+    }
+
+    private fun handleAdaptiveBitrate(currentBitrate: Long) {
+        // Evita mudanças bruscas muito frequentes (apenas a cada 2 segundos)
+        val now = System.currentTimeMillis()
+        if (now - lastBitrateChange < 2000) return
+
+        rtmpDisplay?.let { display ->
+            try {
+                // Se a velocidade de upload cair abaixo de 70% do alvo, reduz a qualidade
+                if (currentBitrate < targetVideoBitrate * 0.7) {
+                    val newBitrate = (targetVideoBitrate * 0.8).toInt() // Reduz para 80%
+                    display.setVideoBitrateOnFly(newBitrate)
+                    Log.d(TAG, "Adaptativo: Reduzindo bitrate para ${newBitrate/1000}kbps")
+                    lastBitrateChange = now
+                } 
+                // Se a conexão estiver boa (acima de 90%), tenta voltar ao original
+                else if (currentBitrate > targetVideoBitrate * 0.9) {
+                     display.setVideoBitrateOnFly(targetVideoBitrate)
+                     lastBitrateChange = now
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Erro ao ajustar bitrate", e)
+            }
         }
     }
 
@@ -176,7 +202,6 @@ class StreamingService : Service() {
             }
             rtmpDisplay = null
             isRunning = false
-            // Parar Widget ao parar a stream
             stopService(Intent(this, FloatingControlService::class.java))
         } catch (e: Exception) {
             Log.e(TAG, "Erro ao parar streaming", e)
