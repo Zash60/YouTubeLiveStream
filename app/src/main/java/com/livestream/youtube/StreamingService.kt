@@ -85,8 +85,9 @@ class StreamingService : Service() {
         val videoBitrate = videoPrefs.getInt("video_bitrate", 4000) * 1000
         val audioBitrate = videoPrefs.getInt("audio_bitrate", 128) * 1000
         val sampleRate = videoPrefs.getInt("sample_rate", 44100)
+        val useAdaptiveBitrate = videoPrefs.getBoolean("adaptive_bitrate", true)
 
-        // IMPORTANTE: Obter DPI real da tela para corrigir o crash de densidade
+        // Obter DPI real da tela
         val dpi = resources.displayMetrics.densityDpi
 
         try {
@@ -97,12 +98,22 @@ class StreamingService : Service() {
                 override fun onConnectionSuccess() { 
                     Log.d(TAG, "Conectado com sucesso!") 
                     isRunning = true
+                    
+                    // Configurar Bitrate Adaptativo se ativado
+                    if (useAdaptiveBitrate) {
+                        rtmpDisplay?.enableBitrateAdapter(true)
+                        rtmpDisplay?.setAdaptiveBitrate(true)
+                        Log.d(TAG, "Bitrate Adaptativo Ativado")
+                    }
                 }
                 override fun onConnectionFailed(reason: String) { 
                     Log.e(TAG, "Falha na conexão: $reason")
                     stopStreaming() 
                 }
-                override fun onNewBitrate(bitrate: Long) {}
+                override fun onNewBitrate(bitrate: Long) {
+                    // Opcional: Logar mudança de bitrate se adaptativo
+                    Log.d(TAG, "Bitrate atual: $bitrate")
+                }
                 override fun onDisconnect() { 
                     Log.d(TAG, "Desconectado") 
                     isRunning = false
@@ -112,26 +123,36 @@ class StreamingService : Service() {
             })
 
             rtmpDisplay?.let { display ->
-                // 1. Configurar Intent do MediaProjection PRIMEIRO
+                // 1. Configurar Intent do MediaProjection
                 data?.let { intentData ->
                     display.setIntentResult(resultCode, intentData)
                 }
 
-                // 2. Preparar vídeo com o DPI correto
+                // 2. Preparar vídeo
                 val prepareVideo = display.prepareVideo(
                     width, height, fps, videoBitrate, 0, dpi
                 )
                 
-                // 3. Preparar áudio
-                val prepareAudio = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    display.prepareInternalAudio(audioBitrate, sampleRate, true)
+                // 3. Preparar áudio com fallback (Segurança)
+                var prepareAudio = false
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    try {
+                        // Tenta áudio interno (stereo, sem echo cancel, sem noise suppress)
+                        prepareAudio = display.prepareInternalAudio(
+                            audioBitrate, sampleRate, true, false, false
+                        )
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Falha ao iniciar áudio interno, tentando microfone", e)
+                        // Fallback para microfone se áudio interno falhar
+                        prepareAudio = display.prepareAudio(audioBitrate, sampleRate, true)
+                    }
                 } else {
-                    display.prepareAudio(audioBitrate, sampleRate, true)
+                    prepareAudio = display.prepareAudio(audioBitrate, sampleRate, true)
                 }
 
                 if (prepareVideo && prepareAudio) {
                     display.startStream("$rtmpUrl/$streamKey")
-                    Log.d(TAG, "Streaming iniciado!")
+                    Log.d(TAG, "Streaming iniciado com configurações: ${width}x${height} @ ${videoBitrate/1000}k")
                 } else {
                     Log.e(TAG, "Falha ao preparar encoder. Video: $prepareVideo, Audio: $prepareAudio")
                     stopStreaming()
