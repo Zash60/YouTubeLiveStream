@@ -5,7 +5,7 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch:  # Permite executar manualmente
+  workflow_dispatch:
 
 jobs:
   build:
@@ -13,84 +13,29 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      # 1. Checkout do código
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Configurar JDK 17
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: gradle
 
-      # 3. Configurar Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # 4. Cache do Gradle
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          gradle-version: 8.2
 
-      # 5. Dar permissão ao gradlew (se existir) ou gerar wrapper
-      - name: Setup Gradle Wrapper
-        run: |
-          if [ ! -f "gradlew" ]; then
-            echo "Generating Gradle Wrapper..."
-            gradle wrapper --gradle-version 8.2
-          fi
-          chmod +x gradlew
+      - name: Build with Gradle
+        run: gradle assembleDebug --no-daemon
 
-      # 6. Build do APK Debug
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --no-daemon
-
-      # 7. Listar APKs gerados
-      - name: List generated APKs
-        run: |
-          echo "=== Generated APKs ==="
-          find . -name "*.apk" -type f
-          echo "======================"
-
-      # 8. Upload do APK
-      - name: Upload Debug APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: youtube-live-debug-${{ github.run_number }}
+          name: app-debug
           path: app/build/outputs/apk/debug/*.apk
-          retention-days: 30
           if-no-files-found: error
-
-      # 9. Criar Release automático (opcional - apenas na branch main)
-      - name: Get current date
-        id: date
-        run: echo "date=$(date +'%Y-%m-%d_%H-%M')" >> $GITHUB_OUTPUT
-
-      - name: Create Release
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: debug-${{ steps.date.outputs.date }}
-          name: Debug Build ${{ steps.date.outputs.date }}
-          body: |
-            🔧 **Debug Build Automático**
-            
-            📅 Data: ${{ steps.date.outputs.date }}
-            🔢 Run: #${{ github.run_number }}
-            📝 Commit: ${{ github.sha }}
-            
-            ---
-            ⚠️ Esta é uma versão de debug para testes.
-          files: app/build/outputs/apk/debug/*.apk
-          draft: false
-          prerelease: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
