@@ -19,7 +19,7 @@ class FloatingControlService : Service() {
     
     private var isMenuExpanded = false
     private var isMuted = false
-    private var isPrivacyOn = false // Controla o ícone e estado da tela preta
+    private var isPrivacyOn = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -30,11 +30,36 @@ class FloatingControlService : Service() {
         val contextThemeWrapper = ContextThemeWrapper(this, R.style.Theme_YouTubeLiveStream)
         val inflater = LayoutInflater.from(contextThemeWrapper)
 
-        // Inflar apenas o widget flutuante
         floatingView = inflater.inflate(R.layout.widget_floating_control, null)
 
         setupLayoutParams()
         setupViews()
+    }
+
+    // --- NOVO: RECEBE ATUALIZAÇÃO DE COR DO SERVIÇO ---
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == "UPDATE_HEALTH") {
+            val color = intent.getStringExtra("health_color")
+            updateHealthIndicator(color)
+        }
+        return super.onStartCommand(intent, flags, startId)
+    }
+
+    private fun updateHealthIndicator(color: String?) {
+        // Se estiver em modo privacidade, não muda a cor (prioridade do ícone roxo/vermelho)
+        if (isPrivacyOn) return
+
+        val mainIcon = floatingView.findViewById<ImageView>(R.id.img_floating_icon)
+        
+        // Remove a tintura para usar a cor original do Drawable
+        mainIcon.background.setTintList(null)
+        
+        when (color) {
+            "GREEN" -> mainIcon.setBackgroundResource(R.drawable.bg_circle_green)
+            "YELLOW" -> mainIcon.setBackgroundResource(R.drawable.bg_circle_yellow)
+            "RED" -> mainIcon.setBackgroundResource(R.drawable.bg_circle_red)
+            else -> mainIcon.setBackgroundResource(R.drawable.bg_circle_red) // Padrão
+        }
     }
 
     private fun setupLayoutParams() {
@@ -77,24 +102,19 @@ class FloatingControlService : Service() {
         val btnStop = floatingView.findViewById<ImageView>(R.id.btn_stop)
         val mainIcon = floatingView.findViewById<ImageView>(R.id.img_floating_icon)
 
-        // 1. Expandir/Recolher Menu
         mainIcon.setOnClickListener {
             toggleMenu(menuLayout, mainIcon)
         }
 
-        // 2. Botão Privacidade (Tela Preta)
         btnPrivacy.setOnClickListener {
             togglePrivacy(btnPrivacy, mainIcon)
-            // Fecha o menu após clicar
             if (isMenuExpanded) toggleMenu(menuLayout, mainIcon)
         }
 
-        // 3. Botão Mutar
         btnMute.setOnClickListener {
             toggleMute(btnMute)
         }
 
-        // 4. Botão Parar
         btnStop.setOnClickListener {
             val intent = Intent(this, StreamingService::class.java).apply {
                 action = StreamingService.ACTION_STOP
@@ -108,25 +128,27 @@ class FloatingControlService : Service() {
         isMenuExpanded = !isMenuExpanded
         menuLayout.visibility = if (isMenuExpanded) View.VISIBLE else View.GONE
         
-        // Atualiza ícone principal
         mainIcon.setImageResource(
             if (isMenuExpanded) android.R.drawable.ic_menu_close_clear_cancel 
-            else if (isPrivacyOn) android.R.drawable.ic_secure // Cadeado se privado
+            else if (isPrivacyOn) android.R.drawable.ic_secure
             else android.R.drawable.ic_menu_camera
         )
         
-        // Cor do fundo
-        mainIcon.background.setTint(
-            if (isMenuExpanded) 0xFF444444.toInt() 
-            else if (isPrivacyOn) 0xFF000000.toInt() 
-            else 0xFFFF0000.toInt()
-        )
+        // Se o menu abrir, fundo cinza escuro para contraste
+        if (isMenuExpanded) {
+            mainIcon.background.setTint(0xFF444444.toInt())
+        } else if (isPrivacyOn) {
+            mainIcon.background.setTint(0xFF000000.toInt())
+        } else {
+            // Se fechou e não está privado, remove tintura para voltar ao Semáforo
+            mainIcon.background.setTintList(null)
+            mainIcon.setBackgroundResource(R.drawable.bg_circle_red) // Reset para base
+        }
     }
 
     private fun togglePrivacy(btnPrivacy: ImageView, mainIcon: ImageView) {
         isPrivacyOn = !isPrivacyOn
 
-        // Envia comando para o Serviço ativar/desativar tela preta
         val intent = Intent(this, StreamingService::class.java).apply {
             action = StreamingService.ACTION_PRIVACY_MODE
             putExtra("privacy", isPrivacyOn)
@@ -134,23 +156,26 @@ class FloatingControlService : Service() {
         startService(intent)
 
         if (isPrivacyOn) {
-            // UI: Privacidade Ligada (Ícone Vermelho)
-            btnPrivacy.setColorFilter(0xFFFF0000.toInt())
+            // Privacidade ON:
+            btnPrivacy.setColorFilter(0xFFFF0000.toInt()) // Botão do menu fica vermelho
             
-            // Marca áudio como mutado na UI (o serviço já muta internamente)
+            // Ícone principal fica com cadeado e fundo Preto
+            mainIcon.setImageResource(android.R.drawable.ic_secure)
+            mainIcon.background.setTint(0xFF000000.toInt()) 
+            
+            // Atualiza mute visual
             val btnMute = floatingView.findViewById<ImageView>(R.id.btn_mute)
             isMuted = true
             btnMute.setImageResource(android.R.drawable.ic_lock_silent_mode)
             btnMute.setColorFilter(0xFFFF0000.toInt())
         } else {
-            // UI: Privacidade Desligada (Ícone Branco)
-            btnPrivacy.setColorFilter(0xFFFFFFFF.toInt())
+            // Privacidade OFF:
+            btnPrivacy.setColorFilter(0xFFFFFFFF.toInt()) // Botão do menu fica branco
             
-            // Restaura ícone principal
+            // Ícone principal volta ao normal (Semáforo assume depois)
             mainIcon.setImageResource(android.R.drawable.ic_menu_camera)
-            mainIcon.background.setTint(0xFFFF0000.toInt())
+            mainIcon.background.setTintList(null) 
             
-            // Restaura estado de áudio (desmutado por padrão ao voltar)
             val btnMute = floatingView.findViewById<ImageView>(R.id.btn_mute)
             isMuted = false
             btnMute.setImageResource(android.R.drawable.ic_lock_silent_mode_off)
@@ -161,7 +186,6 @@ class FloatingControlService : Service() {
     private fun toggleMute(btnMute: ImageView) {
         isMuted = !isMuted
         val intent = Intent(this, StreamingService::class.java).apply {
-            // CORREÇÃO: Usando o nome correto da constante
             action = StreamingService.ACTION_MUTE_AUDIO
             putExtra("mute", isMuted)
         }
