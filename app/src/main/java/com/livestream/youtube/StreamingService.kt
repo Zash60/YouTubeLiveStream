@@ -13,10 +13,10 @@ import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import android.view.WindowManager
 import androidx.core.app.NotificationCompat
 import com.pedro.library.rtmp.RtmpDisplay
 import com.pedro.common.ConnectChecker
+// Importação correta com crases
 import com.pedro.encoder.input.gl.render.filters.`object`.ImageObjectFilterRender
 import com.pedro.encoder.utils.gl.TranslateTo
 import com.pedro.encoder.input.gl.render.filters.NoFilterRender
@@ -35,12 +35,26 @@ class StreamingService : Service() {
     private var targetVideoBitrate = 4000 * 1000
     private var lastBitrateChange = 0L
     
-    // Não mantemos o bitmap em cache global para evitar problemas de rotação/memória
-    // Carregamos na hora que precisa
+    // Imagem de Pausa
+    private var pauseBitmap: Bitmap? = null
+    private var imageFilter: ImageObjectFilterRender? = null
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        loadPauseImage()
+    }
+
+    private fun loadPauseImage() {
+        try {
+            val file = File(filesDir, "pause_image.png")
+            if (file.exists()) {
+                pauseBitmap = BitmapFactory.decodeFile(file.absolutePath)
+                Log.d(TAG, "Imagem de pausa carregada")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Erro ao carregar imagem", e)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -96,58 +110,30 @@ class StreamingService : Service() {
             if (display.isStreaming) {
                 try {
                     if (isPrivacyOn) {
-                        // 1. Tenta carregar a imagem na hora (fresco)
-                        val currentBitmap = loadBitmapFromStorage()
-
-                        if (currentBitmap != null) {
-                            // 2. Cria um novo filtro do zero para garantir a escala correta
-                            val filter = ImageObjectFilterRender()
-                            filter.setImage(currentBitmap)
-                            filter.setScale(100f, 100f) // Força preencher 100% da tela
-                            filter.setPosition(TranslateTo.CENTER)
-                            
-                            display.glInterface.setFilter(filter)
-                            Log.d(TAG, "Privacidade: Imagem aplicada com sucesso")
+                        if (pauseBitmap != null) {
+                            if (imageFilter == null) {
+                                imageFilter = ImageObjectFilterRender()
+                                imageFilter?.setImage(pauseBitmap)
+                            }
+                            imageFilter?.setScale(100f, 100f)
+                            imageFilter?.setPosition(TranslateTo.CENTER)
+                            imageFilter?.let { display.glInterface.setFilter(it) }
                         } else {
-                            // 3. FALLBACK: Se a imagem falhar (nula), usa TELA PRETA
-                            // Isso garante que o jogo não apareça se a imagem der erro
-                            Log.e(TAG, "Privacidade: Imagem não encontrada, usando Tela Preta")
                             display.glInterface.muteVideo()
                         }
-                        
-                        // Sempre muta o áudio na privacidade
                         display.disableAudio()
                     } else {
-                        // Desativar Privacidade
-                        // Remove qualquer filtro
-                        display.glInterface.setFilter(NoFilterRender())
-                        // Garante que o vídeo não está mudo (caso tenha caído no fallback)
-                        display.glInterface.unMuteVideo()
-                        
-                        Log.d(TAG, "Privacidade: Desativada")
+                        if (pauseBitmap != null) {
+                            display.glInterface.setFilter(NoFilterRender())
+                        } else {
+                            display.glInterface.unMuteVideo()
+                        }
                         display.enableAudio()
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Erro crítico na privacidade. Forçando tela preta.", e)
-                    // Em caso de erro (crash do filtro), força tela preta
-                    display.glInterface.muteVideo()
-                    display.disableAudio()
+                    Log.e(TAG, "Erro toggling privacy", e)
                 }
             }
-        }
-    }
-
-    private fun loadBitmapFromStorage(): Bitmap? {
-        return try {
-            val file = File(filesDir, "pause_image.png")
-            if (file.exists()) {
-                BitmapFactory.decodeFile(file.absolutePath)
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Erro ao ler arquivo de imagem", e)
-            null
         }
     }
 
@@ -160,7 +146,6 @@ class StreamingService : Service() {
         var width = videoPrefs.getInt("width", 1280)
         var height = videoPrefs.getInt("height", 720)
         
-        // Lógica de Orientação (Mantida a mesma, pois estava correta)
         val systemOrientation = resources.configuration.orientation
         
         when (orientationMode) {
@@ -170,7 +155,7 @@ class StreamingService : Service() {
             "PORTRAIT" -> {
                 if (width > height) { val t = width; width = height; height = t }
             }
-            else -> { // AUTO
+            else -> { 
                 if (systemOrientation == Configuration.ORIENTATION_LANDSCAPE) {
                     if (width < height) { val t = width; width = height; height = t }
                 } else {
@@ -192,9 +177,29 @@ class StreamingService : Service() {
                 override fun onConnectionStarted(url: String) {}
                 override fun onConnectionSuccess() { isRunning = true }
                 override fun onConnectionFailed(reason: String) { stopStreaming() }
+                
+                // --- NOVO: LÓGICA DO SEMÁFORO ---
                 override fun onNewBitrate(bitrate: Long) {
-                    if (useAdaptiveBitrate && isRunning) handleAdaptiveBitrate(bitrate)
+                    // 1. Bitrate Adaptativo
+                    if (useAdaptiveBitrate && isRunning) {
+                        handleAdaptiveBitrate(bitrate)
+                    }
+                    
+                    // 2. Enviar Saúde para o Widget
+                    // Verde: > 80% do alvo | Amarelo: > 50% | Vermelho: < 50%
+                    val healthColor = when {
+                        bitrate >= targetVideoBitrate * 0.8 -> "GREEN"
+                        bitrate >= targetVideoBitrate * 0.5 -> "YELLOW"
+                        else -> "RED"
+                    }
+                    
+                    val intent = Intent(this@StreamingService, FloatingControlService::class.java).apply {
+                        action = "UPDATE_HEALTH"
+                        putExtra("health_color", healthColor)
+                    }
+                    startService(intent)
                 }
+                
                 override fun onDisconnect() { isRunning = false }
                 override fun onAuthError() {}
                 override fun onAuthSuccess() {}
@@ -218,7 +223,6 @@ class StreamingService : Service() {
 
                 if (prepareVideo && prepareAudio) {
                     display.startStream("$rtmpUrl/$streamKey")
-                    Log.d(TAG, "Streaming started: $orientationMode ${width}x${height}")
                 } else {
                     stopStreaming()
                 }
