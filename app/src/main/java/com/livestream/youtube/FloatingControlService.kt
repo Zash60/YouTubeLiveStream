@@ -36,7 +36,6 @@ class FloatingControlService : Service() {
         setupViews()
     }
 
-    // --- NOVO: RECEBE ATUALIZAÇÃO DE COR DO SERVIÇO ---
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == "UPDATE_HEALTH") {
             val color = intent.getStringExtra("health_color")
@@ -46,19 +45,17 @@ class FloatingControlService : Service() {
     }
 
     private fun updateHealthIndicator(color: String?) {
-        // Se estiver em modo privacidade, não muda a cor (prioridade do ícone roxo/vermelho)
         if (isPrivacyOn) return
 
         val mainIcon = floatingView.findViewById<ImageView>(R.id.img_floating_icon)
         
-        // Remove a tintura para usar a cor original do Drawable
         mainIcon.background.setTintList(null)
         
         when (color) {
             "GREEN" -> mainIcon.setBackgroundResource(R.drawable.bg_circle_green)
             "YELLOW" -> mainIcon.setBackgroundResource(R.drawable.bg_circle_yellow)
             "RED" -> mainIcon.setBackgroundResource(R.drawable.bg_circle_red)
-            else -> mainIcon.setBackgroundResource(R.drawable.bg_circle_red) // Padrão
+            else -> mainIcon.setBackgroundResource(R.drawable.bg_circle_red)
         }
     }
 
@@ -70,11 +67,15 @@ class FloatingControlService : Service() {
             WindowManager.LayoutParams.TYPE_PHONE
         }
 
+        // --- ALTERAÇÃO AQUI ---
+        // Adicionamos FLAG_SECURE para impedir que a bola apareça na gravação/live
+        val flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_SECURE
+
         layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             layoutFlag,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            flags, // Usando a variável flags combinada criada acima
             PixelFormat.TRANSLUCENT
         )
         layoutParams.gravity = Gravity.TOP or Gravity.START
@@ -134,15 +135,13 @@ class FloatingControlService : Service() {
             else android.R.drawable.ic_menu_camera
         )
         
-        // Se o menu abrir, fundo cinza escuro para contraste
         if (isMenuExpanded) {
             mainIcon.background.setTint(0xFF444444.toInt())
         } else if (isPrivacyOn) {
             mainIcon.background.setTint(0xFF000000.toInt())
         } else {
-            // Se fechou e não está privado, remove tintura para voltar ao Semáforo
             mainIcon.background.setTintList(null)
-            mainIcon.setBackgroundResource(R.drawable.bg_circle_red) // Reset para base
+            mainIcon.setBackgroundResource(R.drawable.bg_circle_red)
         }
     }
 
@@ -156,23 +155,18 @@ class FloatingControlService : Service() {
         startService(intent)
 
         if (isPrivacyOn) {
-            // Privacidade ON:
-            btnPrivacy.setColorFilter(0xFFFF0000.toInt()) // Botão do menu fica vermelho
+            btnPrivacy.setColorFilter(0xFFFF0000.toInt())
             
-            // Ícone principal fica com cadeado e fundo Preto
             mainIcon.setImageResource(android.R.drawable.ic_secure)
             mainIcon.background.setTint(0xFF000000.toInt()) 
             
-            // Atualiza mute visual
             val btnMute = floatingView.findViewById<ImageView>(R.id.btn_mute)
             isMuted = true
             btnMute.setImageResource(android.R.drawable.ic_lock_silent_mode)
             btnMute.setColorFilter(0xFFFF0000.toInt())
         } else {
-            // Privacidade OFF:
-            btnPrivacy.setColorFilter(0xFFFFFFFF.toInt()) // Botão do menu fica branco
+            btnPrivacy.setColorFilter(0xFFFFFFFF.toInt())
             
-            // Ícone principal volta ao normal (Semáforo assume depois)
             mainIcon.setImageResource(android.R.drawable.ic_menu_camera)
             mainIcon.background.setTintList(null) 
             
