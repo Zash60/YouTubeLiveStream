@@ -10,6 +10,7 @@ import android.view.*
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.view.ContextThemeWrapper
+import android.graphics.Color
 
 class FloatingControlService : Service() {
 
@@ -39,6 +40,9 @@ class FloatingControlService : Service() {
         // o artefato preto ao usar FLAG_SECURE em alguns dispositivos.
         floatingView.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
         
+        // NEW: Explicitly set root view background to transparent to help with see-through capture
+        floatingView.setBackgroundColor(Color.TRANSPARENT)
+        
         setupLayoutParams()
         setupViews()
     }
@@ -53,7 +57,12 @@ class FloatingControlService : Service() {
                     try {
                         windowManager.updateViewLayout(floatingView, layoutParams)
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        // If update fails (e.g., format change), remove and re-add the view
+                        if (floatingView.windowToken != null) {
+                            windowManager.removeView(floatingView)
+                        }
+                        setupLayoutParams() // Re-setup to apply new format if needed
+                        windowManager.addView(floatingView, layoutParams)
                     }
                 }
             }
@@ -99,20 +108,25 @@ class FloatingControlService : Service() {
             WindowManager.LayoutParams.WRAP_CONTENT,
             layoutFlag,
             flags,
-            // CORREÇÃO DO QUADRADO PRETO (Passo 2)
-            // RGBA_8888 lida melhor com alpha em secure windows do que TRANSLUCENT
-            PixelFormat.RGBA_8888 
+            // CHANGED: Use TRANSPARENT instead of RGBA_8888 for better handling of secure overlays during capture
+            // This often prevents the black square by treating the window as see-through in MediaProjection
+            PixelFormat.TRANSPARENT
         )
         layoutParams.gravity = Gravity.TOP or Gravity.START
         layoutParams.x = 20
         layoutParams.y = 200
+        
+        // NEW: Optional alpha trick (close to 1.0 but not quite) - can sometimes bypass black artifacts on certain devices
+        layoutParams.alpha = if (isInvisibleMode) 0.99f else 1.0f
     }
     
     private fun updateLayoutFlag() {
         if (isInvisibleMode) {
             layoutParams.flags = layoutParams.flags or WindowManager.LayoutParams.FLAG_SECURE
+            layoutParams.alpha = 0.99f
         } else {
             layoutParams.flags = layoutParams.flags and WindowManager.LayoutParams.FLAG_SECURE.inv()
+            layoutParams.alpha = 1.0f
         }
     }
 
@@ -171,7 +185,7 @@ class FloatingControlService : Service() {
         if (isMenuExpanded) {
             mainIcon.background.setTint(0xFF444444.toInt())
         } else if (isPrivacyOn) {
-            mainIcon.background.setTint(0xFF000000.toInt())
+            mainIcon.background.setTint(0xFF000000.toInt()) 
         } else {
             mainIcon.background.setTintList(null)
             mainIcon.setBackgroundResource(R.drawable.bg_circle_red)
