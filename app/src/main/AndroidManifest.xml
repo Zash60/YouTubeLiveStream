@@ -34,7 +34,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.YouTubeLiveStream"
         android:usesCleartextTraffic="true"
-        tools:targetApi="31">
+        tools:targetApi="35"> <!-- UPDATED: Target Android 15 for lint -->
         
         <!-- usesCleartextTraffic="true" é essencial para conexões RTMP -->
 
@@ -61,12 +61,12 @@
             android:parentActivityName=".MainActivity" />
 
         <!-- Serviço de Streaming (Core) -->
-        <!-- foregroundServiceType é OBRIGATÓRIO para Android 10+ -->
+        <!-- foregroundServiceType é OBRIGATÓRIO para Android 10+; UPDATED: Added mediaProcessing for Android 15 encoding tasks -->
         <service
             android:name=".StreamingService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="mediaProjection" />
+            android:foregroundServiceType="mediaProjection|mediaProcessing" />
 
         <!-- Serviço do Controle Flutuante -->
         <service
