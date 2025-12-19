@@ -34,12 +34,11 @@ class FloatingControlService : Service() {
 
         floatingView = inflater.inflate(R.layout.widget_floating_control, null)
 
-        // --- CORREÇÃO DO QUADRADO PRETO (Passo 1) ---
+        // CORREÇÃO DO QUADRADO PRETO (Passo 1)
         // Força a renderização via Software. Isso impede que a GPU crie 
         // o artefato preto ao usar FLAG_SECURE em alguns dispositivos.
         floatingView.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
-        // ---------------------------------------------
-
+        
         setupLayoutParams()
         setupViews()
     }
@@ -100,10 +99,9 @@ class FloatingControlService : Service() {
             WindowManager.LayoutParams.WRAP_CONTENT,
             layoutFlag,
             flags,
-            // --- CORREÇÃO DO QUADRADO PRETO (Passo 2) ---
+            // CORREÇÃO DO QUADRADO PRETO (Passo 2)
             // RGBA_8888 lida melhor com alpha em secure windows do que TRANSLUCENT
             PixelFormat.RGBA_8888 
-            // --------------------------------------------
         )
         layoutParams.gravity = Gravity.TOP or Gravity.START
         layoutParams.x = 20
