@@ -20,6 +20,9 @@ class FloatingControlService : Service() {
     private var isMenuExpanded = false
     private var isMuted = false
     private var isPrivacyOn = false
+    
+    // NOVO: Controle de invisibilidade na gravação
+    private var isInvisibleMode = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -36,8 +39,24 @@ class FloatingControlService : Service() {
         setupViews()
     }
 
-    // --- NOVO: RECEBE ATUALIZAÇÃO DE COR DO SERVIÇO ---
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // NOVO: Verifica se deve ativar o modo invisível (fantasma)
+        if (intent?.hasExtra("invisible_mode") == true) {
+            val newMode = intent.getBooleanExtra("invisible_mode", false)
+            if (newMode != isInvisibleMode) {
+                isInvisibleMode = newMode
+                // Se o modo mudou, atualiza a janela flutuante dinamicamente
+                if (::layoutParams.isInitialized && ::floatingView.isInitialized) {
+                    updateLayoutFlag()
+                    try {
+                        windowManager.updateViewLayout(floatingView, layoutParams)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            }
+        }
+
         if (intent?.action == "UPDATE_HEALTH") {
             val color = intent.getStringExtra("health_color")
             updateHealthIndicator(color)
@@ -70,16 +89,33 @@ class FloatingControlService : Service() {
             WindowManager.LayoutParams.TYPE_PHONE
         }
 
+        // Flags padrão
+        var flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+
+        // NOVO: Se o modo invisível estiver ativo, adiciona FLAG_SECURE
+        if (isInvisibleMode) {
+            flags = flags or WindowManager.LayoutParams.FLAG_SECURE
+        }
+
         layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             layoutFlag,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            flags,
             PixelFormat.TRANSLUCENT
         )
         layoutParams.gravity = Gravity.TOP or Gravity.START
         layoutParams.x = 20
         layoutParams.y = 200
+    }
+    
+    // NOVO: Função para alternar o FLAG_SECURE dinamicamente
+    private fun updateLayoutFlag() {
+        if (isInvisibleMode) {
+            layoutParams.flags = layoutParams.flags or WindowManager.LayoutParams.FLAG_SECURE
+        } else {
+            layoutParams.flags = layoutParams.flags and WindowManager.LayoutParams.FLAG_SECURE.inv()
+        }
     }
 
     private fun setupViews() {
