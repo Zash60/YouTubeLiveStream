@@ -171,6 +171,10 @@ class SettingsActivity : AppCompatActivity() {
         val adaptiveBitrate = prefs.getBoolean("adaptive_bitrate", true)
         binding.switchAdaptiveBitrate.isChecked = adaptiveBitrate
 
+        // NOVO: Carregar opção de Bola Invisível
+        val invisibleWidget = prefs.getBoolean("invisible_widget", false)
+        binding.switchInvisibleWidget.isChecked = invisibleWidget
+
         // Carregar imagem salva
         updateImagePreview()
     }
@@ -196,6 +200,10 @@ class SettingsActivity : AppCompatActivity() {
             putInt("audio_bitrate", binding.spinnerAudioBitrate.selectedItem.toString().toInt())
             putInt("sample_rate", binding.spinnerSampleRate.selectedItem.toString().toInt())
             putBoolean("adaptive_bitrate", binding.switchAdaptiveBitrate.isChecked)
+            
+            // NOVO: Salvar opção de Bola Invisível
+            putBoolean("invisible_widget", binding.switchInvisibleWidget.isChecked)
+            
             apply()
         }
     }
