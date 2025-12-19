@@ -31,9 +31,6 @@ class StreamingService : Service() {
     // Variável para armazenar a escolha do usuário
     private var orientationMode = "AUTO"
 
-    private var isMuted = false
-    private var isPrivacyOn = false
-
     private var useAdaptiveBitrate = true
     private var targetVideoBitrate = 4000 * 1000
     private var lastBitrateChange = 0L
@@ -76,32 +73,25 @@ class StreamingService : Service() {
                 startForeground(NOTIFICATION_ID, createNotification())
                 startStreaming()
                 
-                // FloatingControlService REMOVIDO
+                try {
+                    startService(Intent(this, FloatingControlService::class.java))
+                } catch (e: Exception) {
+                    Log.e(TAG, "Erro ao iniciar widget", e)
+                }
             }
             ACTION_STOP -> {
                 stopStreaming()
                 stopForeground(STOP_FOREGROUND_REMOVE)
+                stopService(Intent(this, FloatingControlService::class.java))
                 stopSelf()
             }
             ACTION_MUTE_AUDIO -> {
-                isMuted = intent.getBooleanExtra("mute", false)
-                handleAudioMute(isMuted)
-                startForeground(NOTIFICATION_ID, createNotification())
+                val shouldMute = intent.getBooleanExtra("mute", false)
+                handleAudioMute(shouldMute)
             }
             ACTION_PRIVACY_MODE -> {
-                isPrivacyOn = intent.getBooleanExtra("privacy", false)
+                val isPrivacyOn = intent.getBooleanExtra("privacy", false)
                 handlePrivacyMode(isPrivacyOn)
-                startForeground(NOTIFICATION_ID, createNotification())
-            }
-            ACTION_TOGGLE_MUTE -> {
-                isMuted = !isMuted
-                handleAudioMute(isMuted)
-                startForeground(NOTIFICATION_ID, createNotification())
-            }
-            ACTION_TOGGLE_PRIVACY -> {
-                isPrivacyOn = !isPrivacyOn
-                handlePrivacyMode(isPrivacyOn)
-                startForeground(NOTIFICATION_ID, createNotification())
             }
         }
         return START_NOT_STICKY
@@ -195,8 +185,19 @@ class StreamingService : Service() {
                         handleAdaptiveBitrate(bitrate)
                     }
                     
-                    // 2. A saúde do bitrate não é mais enviada para o FloatingControlService, pois ele foi removido.
-                    // A informação de saúde pode ser logada ou usada internamente, mas não é mais exposta no widget.
+                    // 2. Enviar Saúde para o Widget
+                    // Verde: > 80% do alvo | Amarelo: > 50% | Vermelho: < 50%
+                    val healthColor = when {
+                        bitrate >= targetVideoBitrate * 0.8 -> "GREEN"
+                        bitrate >= targetVideoBitrate * 0.5 -> "YELLOW"
+                        else -> "RED"
+                    }
+                    
+                    val intent = Intent(this@StreamingService, FloatingControlService::class.java).apply {
+                        action = "UPDATE_HEALTH"
+                        putExtra("health_color", healthColor)
+                    }
+                    startService(intent)
                 }
                 
                 override fun onDisconnect() { isRunning = false }
@@ -258,6 +259,7 @@ class StreamingService : Service() {
             }
             rtmpDisplay = null
             isRunning = false
+            stopService(Intent(this, FloatingControlService::class.java))
         } catch (e: Exception) {}
     }
 
@@ -281,31 +283,10 @@ class StreamingService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val muteIntent = Intent(this, StreamingService::class.java).apply {
-            action = ACTION_TOGGLE_MUTE
-        }
-        val mutePendingIntent = PendingIntent.getService(
-            this, 0, muteIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val privacyIntent = Intent(this, StreamingService::class.java).apply {
-            action = ACTION_TOGGLE_PRIVACY
-        }
-        val privacyPendingIntent = PendingIntent.getService(
-            this, 0, privacyIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val muteIcon = if (isMuted) android.R.drawable.ic_lock_silent_mode else android.R.drawable.ic_lock_silent_mode_off
-        val privacyIcon = if (isPrivacyOn) android.R.drawable.ic_secure else android.R.drawable.ic_lock_lock
-
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("🔴 Live Streaming")
-            .setContentText("Controles: Mute=${if(isMuted) "ON" else "OFF"}, Privacy=${if(isPrivacyOn) "ON" else "OFF"}")
+            .setContentText("Tap to open")
             .setSmallIcon(android.R.drawable.ic_menu_camera)
-            .addAction(muteIcon, "Mute/Unmute", mutePendingIntent)
-            .addAction(privacyIcon, "Privacy Mode", privacyPendingIntent)
             .addAction(android.R.drawable.ic_media_pause, "Stop", stopPendingIntent)
             .setOngoing(true)
             .build()
@@ -324,11 +305,6 @@ class StreamingService : Service() {
         const val ACTION_STOP = "com.livestream.youtube.STOP"
         const val ACTION_MUTE_AUDIO = "com.livestream.youtube.MUTE_AUDIO"
         const val ACTION_PRIVACY_MODE = "com.livestream.youtube.PRIVACY_MODE"
-        
-        // NOVAS AÇÕES DE NOTIFICAÇÃO
-        const val ACTION_TOGGLE_MUTE = "com.livestream.youtube.TOGGLE_MUTE"
-        const val ACTION_TOGGLE_PRIVACY = "com.livestream.youtube.TOGGLE_PRIVACY"
-        
         const val EXTRA_RESULT_CODE = "result_code"
         const val EXTRA_DATA = "data"
         const val CHANNEL_ID = "streaming_channel"
