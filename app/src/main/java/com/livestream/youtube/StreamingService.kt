@@ -16,7 +16,6 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.pedro.library.rtmp.RtmpDisplay
 import com.pedro.common.ConnectChecker
-// Importação correta com crases
 import com.pedro.encoder.input.gl.render.filters.`object`.ImageObjectFilterRender
 import com.pedro.encoder.utils.gl.TranslateTo
 import com.pedro.encoder.input.gl.render.filters.NoFilterRender
@@ -70,11 +69,19 @@ class StreamingService : Service() {
                 
                 orientationMode = intent.getStringExtra("orientation_mode") ?: "AUTO"
                 
+                // NOVO: Ler configuração de Widget Invisível
+                val prefs = getSharedPreferences("video_settings", Context.MODE_PRIVATE)
+                val invisibleWidget = prefs.getBoolean("invisible_widget", false)
+
                 startForeground(NOTIFICATION_ID, createNotification())
                 startStreaming()
                 
                 try {
-                    startService(Intent(this, FloatingControlService::class.java))
+                    // Envia a configuração 'invisible_mode' para o Widget
+                    val widgetIntent = Intent(this, FloatingControlService::class.java).apply {
+                        putExtra("invisible_mode", invisibleWidget)
+                    }
+                    startService(widgetIntent)
                 } catch (e: Exception) {
                     Log.e(TAG, "Erro ao iniciar widget", e)
                 }
@@ -178,7 +185,6 @@ class StreamingService : Service() {
                 override fun onConnectionSuccess() { isRunning = true }
                 override fun onConnectionFailed(reason: String) { stopStreaming() }
                 
-                // --- NOVO: LÓGICA DO SEMÁFORO ---
                 override fun onNewBitrate(bitrate: Long) {
                     // 1. Bitrate Adaptativo
                     if (useAdaptiveBitrate && isRunning) {
