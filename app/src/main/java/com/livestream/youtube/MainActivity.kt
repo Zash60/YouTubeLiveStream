@@ -16,9 +16,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.WindowCompat // NEW IMPORT for edge-to-edge
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import com.livestream.youtube.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -52,23 +49,18 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // NEW: Enable edge-to-edge for Android 15+ compatibility
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        WindowInsetsControllerCompat(window, binding.root).let { controller ->
-            controller.hide(WindowInsetsCompat.Type.systemBars())
-            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        }
+        // CORREÇÃO VISUAL: Removido o código que escondia a barra de status
+        // e causava sobreposição no título do app.
 
         mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) 
             as MediaProjectionManager
 
         setupUI()
-        setupOrientationSpinner() // NOVO
+        setupOrientationSpinner()
         checkPermissions()
         loadSavedSettings()
     }
 
-    // NOVO: Configura o Spinner de Orientação
     private fun setupOrientationSpinner() {
         val options = arrayOf("Automático (Detectar)", "Deitado (Paisagem/Jogos)", "Em Pé (Retrato)")
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, options)
@@ -169,7 +161,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startStreamingService(resultCode: Int, data: Intent) {
-        // Pega a opção selecionada no Spinner
         val selectedOrientationIndex = binding.spinnerOrientation.selectedItemPosition
         val orientationMode = when (selectedOrientationIndex) {
             1 -> "LANDSCAPE" // Deitado
@@ -181,7 +172,7 @@ class MainActivity : AppCompatActivity() {
             action = StreamingService.ACTION_START
             putExtra(StreamingService.EXTRA_RESULT_CODE, resultCode)
             putExtra(StreamingService.EXTRA_DATA, data)
-            putExtra("orientation_mode", orientationMode) // Envia para o serviço
+            putExtra("orientation_mode", orientationMode)
         }
         
         ContextCompat.startForegroundService(this, serviceIntent)
@@ -206,7 +197,7 @@ class MainActivity : AppCompatActivity() {
             binding.btnStartStream.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_red_dark))
             binding.statusText.text = "🔴 AO VIVO"
             binding.statusText.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_light))
-            binding.spinnerOrientation.isEnabled = false // Trava a mudança durante a live
+            binding.spinnerOrientation.isEnabled = false
         } else {
             binding.btnStartStream.text = "▶ Iniciar Transmissão"
             binding.btnStartStream.setBackgroundColor(ContextCompat.getColor(this, android.R.color.holo_red_light))
