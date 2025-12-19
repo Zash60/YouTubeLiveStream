@@ -1,8 +1,9 @@
+// Project-wide Gradle settings
 plugins {
     id 'com.android.application' version '8.2.2' apply false
     id 'com.android.library' version '8.2.2' apply false
-    // ATUALIZAÇÃO CRÍTICA: Versão do Kotlin atualizada para 2.2.21 para compatibilidade com RootEncoder
-    id 'org.jetbrains.kotlin.android' version '2.2.21' apply false
+    // CORREÇÃO: Ajustado para uma versão estável compatível (2.0.21)
+    id 'org.jetbrains.kotlin.android' version '2.0.21' apply false
 }
 
 tasks.register('clean', Delete) {
