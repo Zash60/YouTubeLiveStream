@@ -13,6 +13,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <!-- Necessário para capturar a tela no Android 10+ -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    
+    <!-- CORREÇÃO DO CRASH: Permissão obrigatória para Android 14/15 quando usa type="mediaProcessing" -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING" />
 
     <!-- 4. Permissão de Notificação (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -34,7 +37,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.YouTubeLiveStream"
         android:usesCleartextTraffic="true"
-        tools:targetApi="35"> <!-- UPDATED: Target Android 15 for lint -->
+        tools:targetApi="35">
         
         <!-- usesCleartextTraffic="true" é essencial para conexões RTMP -->
 
@@ -61,7 +64,6 @@
             android:parentActivityName=".MainActivity" />
 
         <!-- Serviço de Streaming (Core) -->
-        <!-- foregroundServiceType é OBRIGATÓRIO para Android 10+; UPDATED: Added mediaProcessing for Android 15 encoding tasks -->
         <service
             android:name=".StreamingService"
             android:enabled="true"
