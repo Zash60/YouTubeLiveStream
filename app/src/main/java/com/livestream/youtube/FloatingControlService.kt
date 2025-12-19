@@ -35,12 +35,9 @@ class FloatingControlService : Service() {
 
         floatingView = inflater.inflate(R.layout.widget_floating_control, null)
 
-        // CORREÇÃO DO QUADRADO PRETO (Passo 1)
-        // Força a renderização via Software. Isso impede que a GPU crie 
-        // o artefato preto ao usar FLAG_SECURE em alguns dispositivos.
-        floatingView.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
-        
-        // NEW: Explicitly set root view background to transparent to help with see-through capture
+        // CORREÇÃO DO QUADRADO PRETO:
+        // 1. Removemos o setLayerType(SOFTWARE) que causa fundo preto em transparências.
+        // 2. Garantimos que o fundo da view raiz seja transparente.
         floatingView.setBackgroundColor(Color.TRANSPARENT)
         
         setupLayoutParams()
@@ -57,11 +54,10 @@ class FloatingControlService : Service() {
                     try {
                         windowManager.updateViewLayout(floatingView, layoutParams)
                     } catch (e: Exception) {
-                        // If update fails (e.g., format change), remove and re-add the view
                         if (floatingView.windowToken != null) {
                             windowManager.removeView(floatingView)
                         }
-                        setupLayoutParams() // Re-setup to apply new format if needed
+                        setupLayoutParams()
                         windowManager.addView(floatingView, layoutParams)
                     }
                 }
@@ -97,36 +93,31 @@ class FloatingControlService : Service() {
             WindowManager.LayoutParams.TYPE_PHONE
         }
 
-        var flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+        var flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS // Permite desenhar sem limites
 
         if (isInvisibleMode) {
             flags = flags or WindowManager.LayoutParams.FLAG_SECURE
         }
 
+        // CORREÇÃO: Usar TRANSLUCENT em vez de TRANSPARENT ajuda a evitar o quadrado preto
         layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             layoutFlag,
             flags,
-            // CHANGED: Use TRANSPARENT instead of RGBA_8888 for better handling of secure overlays during capture
-            // This often prevents the black square by treating the window as see-through in MediaProjection
-            PixelFormat.TRANSPARENT
+            PixelFormat.TRANSLUCENT
         )
         layoutParams.gravity = Gravity.TOP or Gravity.START
         layoutParams.x = 20
         layoutParams.y = 200
-        
-        // NEW: Optional alpha trick (close to 1.0 but not quite) - can sometimes bypass black artifacts on certain devices
-        layoutParams.alpha = if (isInvisibleMode) 0.99f else 1.0f
     }
     
     private fun updateLayoutFlag() {
         if (isInvisibleMode) {
             layoutParams.flags = layoutParams.flags or WindowManager.LayoutParams.FLAG_SECURE
-            layoutParams.alpha = 0.99f
         } else {
             layoutParams.flags = layoutParams.flags and WindowManager.LayoutParams.FLAG_SECURE.inv()
-            layoutParams.alpha = 1.0f
         }
     }
 
