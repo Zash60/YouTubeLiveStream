@@ -38,7 +38,7 @@ class FloatingControlService : Service() {
         // CORREÇÃO DO QUADRADO PRETO:
         // 1. Removemos o setLayerType(SOFTWARE) que causa fundo preto em transparências.
         // 2. Garantimos que o fundo da view raiz seja transparente.
-        floatingView.setBackgroundColor(Color.TRANSPARENT)
+        // floatingView.setBackgroundColor(Color.TRANSPARENT) - Removido, pois o problema é com o tamanho da view no modo invisível.
         
         setupLayoutParams()
         setupViews()
@@ -116,8 +116,14 @@ class FloatingControlService : Service() {
     private fun updateLayoutFlag() {
         if (isInvisibleMode) {
             layoutParams.flags = layoutParams.flags or WindowManager.LayoutParams.FLAG_SECURE
+            // CORREÇÃO: Reduz o tamanho da view para 1x1 pixel no modo invisível
+            layoutParams.width = 1
+            layoutParams.height = 1
         } else {
             layoutParams.flags = layoutParams.flags and WindowManager.LayoutParams.FLAG_SECURE.inv()
+            // Restaura o tamanho normal
+            layoutParams.width = WindowManager.LayoutParams.WRAP_CONTENT
+            layoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT
         }
     }
 
