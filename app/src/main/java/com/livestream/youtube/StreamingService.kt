@@ -75,9 +75,15 @@ class StreamingService : Service() {
                 try {
                     // Inicia o widget flutuante
                     val widgetIntent = Intent(this, FloatingControlService::class.java)
-                    startService(widgetIntent)
+                    ContextCompat.startForegroundService(this, widgetIntent)
                 } catch (e: Exception) {
                     Log.e(TAG, "Erro ao iniciar widget", e)
+                    // Tentar iniciar como serviço normal se foreground falhar
+                    try {
+                        startService(Intent(this, FloatingControlService::class.java))
+                    } catch (e2: Exception) {
+                        Log.e(TAG, "Erro ao iniciar widget (fallback)", e2)
+                    }
                 }
             }
             ACTION_STOP -> {
@@ -228,6 +234,7 @@ class StreamingService : Service() {
                 }
             }
         } catch (e: Exception) {
+            Log.e(TAG, "Erro ao iniciar streaming", e)
             stopStreaming()
         }
     }
@@ -259,8 +266,16 @@ class StreamingService : Service() {
             }
             rtmpDisplay = null
             isRunning = false
-            stopService(Intent(this, FloatingControlService::class.java))
-        } catch (e: Exception) {}
+            
+            // Parar o widget flutuante
+            try {
+                stopService(Intent(this, FloatingControlService::class.java))
+            } catch (e: Exception) {
+                Log.e(TAG, "Erro ao parar widget", e)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Erro ao parar streaming", e)
+        }
     }
 
     private fun createNotificationChannel() {

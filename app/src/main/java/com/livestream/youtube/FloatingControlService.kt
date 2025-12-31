@@ -42,20 +42,24 @@ class FloatingControlService : Service() {
             updateHealthIndicator(color)
         }
         
-        return super.onStartCommand(intent, flags, startId)
+        return START_STICKY
     }
 
     private fun updateHealthIndicator(color: String?) {
-        if (isPrivacyOn) return
+        if (isPrivacyOn || !::floatingView.isInitialized) return
 
-        val mainIcon = floatingView.findViewById<ImageView>(R.id.img_floating_icon)
-        mainIcon.background.setTintList(null)
-        
-        when (color) {
-            "GREEN" -> mainIcon.setBackgroundResource(R.drawable.bg_circle_green)
-            "YELLOW" -> mainIcon.setBackgroundResource(R.drawable.bg_circle_yellow)
-            "RED" -> mainIcon.setBackgroundResource(R.drawable.bg_circle_red)
-            else -> mainIcon.setBackgroundResource(R.drawable.bg_circle_red)
+        try {
+            val mainIcon = floatingView.findViewById<ImageView>(R.id.img_floating_icon)
+            mainIcon.background.setTintList(null)
+            
+            when (color) {
+                "GREEN" -> mainIcon.setBackgroundResource(R.drawable.bg_circle_green)
+                "YELLOW" -> mainIcon.setBackgroundResource(R.drawable.bg_circle_yellow)
+                "RED" -> mainIcon.setBackgroundResource(R.drawable.bg_circle_red)
+                else -> mainIcon.setBackgroundResource(R.drawable.bg_circle_red)
+            }
+        } catch (e: Exception) {
+            // Ignorar erros de atualização do indicador
         }
     }
 
@@ -84,9 +88,25 @@ class FloatingControlService : Service() {
 
     private fun setupViews() {
         try {
-            windowManager.addView(floatingView, layoutParams)
+            // Verificar se a view já está adicionada
+            if (floatingView.windowToken == null) {
+                windowManager.addView(floatingView, layoutParams)
+            }
         } catch (e: Exception) {
-            e.printStackTrace()
+            // Se já existe, tentar atualizar
+            try {
+                windowManager.updateViewLayout(floatingView, layoutParams)
+            } catch (updateException: Exception) {
+                // Se falhar, tentar remover e readicionar
+                try {
+                    windowManager.removeView(floatingView)
+                } catch (removeException: Exception) {}
+                try {
+                    windowManager.addView(floatingView, layoutParams)
+                } catch (addException: Exception) {
+                    addException.printStackTrace()
+                }
+            }
         }
 
         setupTouchListener()
@@ -237,13 +257,15 @@ class FloatingControlService : Service() {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         try {
-            if (::floatingView.isInitialized && floatingView.windowToken != null) {
-                windowManager.removeView(floatingView)
+            if (::floatingView.isInitialized) {
+                if (floatingView.windowToken != null) {
+                    windowManager.removeView(floatingView)
+                }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            // Ignorar erros de limpeza
         }
+        super.onDestroy()
     }
 }
