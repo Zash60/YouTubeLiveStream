@@ -69,18 +69,12 @@ class StreamingService : Service() {
                 
                 orientationMode = intent.getStringExtra("orientation_mode") ?: "AUTO"
                 
-                // NOVO: Ler configuração de Widget Invisível
-                val prefs = getSharedPreferences("video_settings", Context.MODE_PRIVATE)
-                val invisibleWidget = prefs.getBoolean("invisible_widget", false)
-
                 startForeground(NOTIFICATION_ID, createNotification())
                 startStreaming()
                 
                 try {
-                    // Envia a configuração 'invisible_mode' para o Widget
-                    val widgetIntent = Intent(this, FloatingControlService::class.java).apply {
-                        putExtra("invisible_mode", invisibleWidget)
-                    }
+                    // Inicia o widget flutuante
+                    val widgetIntent = Intent(this, FloatingControlService::class.java)
                     startService(widgetIntent)
                 } catch (e: Exception) {
                     Log.e(TAG, "Erro ao iniciar widget", e)

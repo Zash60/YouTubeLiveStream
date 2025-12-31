@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
 import android.widget.ArrayAdapter
+import android.widget.RadioButton
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -33,18 +34,26 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
+    // Enum para os perfis de qualidade
+    enum class QualityProfile(val displayName: String, val width: Int, val height: Int, val fps: Int, val videoBitrate: Int, val audioBitrate: Int) {
+        HIGH("Qualidade Alta", 1920, 1080, 60, 8000, 256),
+        MEDIUM("Qualidade Média", 1280, 720, 30, 4000, 128),
+        LOW("Qualidade Baixa", 854, 480, 24, 2000, 96),
+        CUSTOM("Personalizado", 0, 0, 0, 0, 0)
+    }
+
+    private var currentQualityProfile = QualityProfile.MEDIUM
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // CORREÇÃO VISUAL: Removido o código que escondia a barra de status
-        // e fazia o botão de voltar ficar cortado.
-
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.title = "Configurações"
 
         setupSpinners()
+        setupQualityProfiles()
         setupImagePicker()
         loadSettings()
         setupSaveButton()
@@ -52,7 +61,6 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun setupImagePicker() {
         binding.btnSelectImage.setOnClickListener {
-            // Verificar permissões
             val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 Manifest.permission.READ_MEDIA_IMAGES
             } else {
@@ -86,7 +94,6 @@ class SettingsActivity : AppCompatActivity() {
             val inputStream = contentResolver.openInputStream(uri)
             val bitmap = BitmapFactory.decodeStream(inputStream)
             
-            // Salvar no armazenamento interno do app
             val file = File(filesDir, "pause_image.png")
             val out = FileOutputStream(file)
             bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out)
@@ -146,6 +153,76 @@ class SettingsActivity : AppCompatActivity() {
         binding.spinnerSampleRate.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, sampleRateOptions)
     }
 
+    private fun setupQualityProfiles() {
+        binding.rbQualityHigh.setOnClickListener { selectQualityProfile(QualityProfile.HIGH) }
+        binding.rbQualityMedium.setOnClickListener { selectQualityProfile(QualityProfile.MEDIUM) }
+        binding.rbQualityLow.setOnClickListener { selectQualityProfile(QualityProfile.LOW) }
+        binding.rbQualityCustom.setOnClickListener { selectQualityProfile(QualityProfile.CUSTOM) }
+
+        // Aplicar perfil padrão
+        selectQualityProfile(QualityProfile.MEDIUM)
+    }
+
+    private fun selectQualityProfile(profile: QualityProfile) {
+        currentQualityProfile = profile
+
+        // Desmarcar todos os radio buttons
+        binding.rbQualityHigh.isChecked = false
+        binding.rbQualityMedium.isChecked = false
+        binding.rbQualityLow.isChecked = false
+        binding.rbQualityCustom.isChecked = false
+
+        // Marcar o selecionado
+        when (profile) {
+            QualityProfile.HIGH -> binding.rbQualityHigh.isChecked = true
+            QualityProfile.MEDIUM -> binding.rbQualityMedium.isChecked = true
+            QualityProfile.LOW -> binding.rbQualityLow.isChecked = true
+            QualityProfile.CUSTOM -> binding.rbQualityCustom.isChecked = true
+        }
+
+        // Aplicar configurações se não for customizado
+        if (profile != QualityProfile.CUSTOM) {
+            applyQualityProfile(profile)
+        }
+
+        // Habilitar/desabilitar campos customizados
+        val customEnabled = profile == QualityProfile.CUSTOM
+        binding.etCustomVideoBitrate.isEnabled = customEnabled
+        binding.etCustomAudioBitrate.isEnabled = customEnabled
+        binding.etCustomWidth.isEnabled = customEnabled
+        binding.etCustomHeight.isEnabled = customEnabled
+        binding.spinnerResolution.isEnabled = !customEnabled
+        binding.spinnerFps.isEnabled = !customEnabled
+        binding.spinnerVideoBitrate.isEnabled = !customEnabled
+        binding.spinnerAudioBitrate.isEnabled = !customEnabled
+    }
+
+    private fun applyQualityProfile(profile: QualityProfile) {
+        when (profile) {
+            QualityProfile.HIGH -> {
+                binding.spinnerResolution.setSelection(0) // 1920x1080
+                binding.spinnerFps.setSelection(0) // 60
+                binding.spinnerVideoBitrate.setSelection(0) // 8000
+                binding.spinnerAudioBitrate.setSelection(1) // 256
+            }
+            QualityProfile.MEDIUM -> {
+                binding.spinnerResolution.setSelection(1) // 1280x720
+                binding.spinnerFps.setSelection(1) // 30
+                binding.spinnerVideoBitrate.setSelection(3) // 4000
+                binding.spinnerAudioBitrate.setSelection(3) // 128
+            }
+            QualityProfile.LOW -> {
+                binding.spinnerResolution.setSelection(2) // 854x480
+                binding.spinnerFps.setSelection(2) // 24
+                binding.spinnerVideoBitrate.setSelection(6) // 2000
+                binding.spinnerAudioBitrate.setSelection(4) // 96
+            }
+            QualityProfile.CUSTOM -> {
+                // Não aplicar nada, deixar campos customizados ativos
+            }
+        }
+    }
+
     private fun loadSettings() {
         val prefs = getSharedPreferences("video_settings", Context.MODE_PRIVATE)
         
@@ -174,9 +251,16 @@ class SettingsActivity : AppCompatActivity() {
         val adaptiveBitrate = prefs.getBoolean("adaptive_bitrate", true)
         binding.switchAdaptiveBitrate.isChecked = adaptiveBitrate
 
-        // NOVO: Carregar opção de Bola Invisível
-        val invisibleWidget = prefs.getBoolean("invisible_widget", false)
-        binding.switchInvisibleWidget.isChecked = invisibleWidget
+        // Carregar configurações customizadas
+        binding.etCustomVideoBitrate.setText(prefs.getString("custom_video_bitrate", ""))
+        binding.etCustomAudioBitrate.setText(prefs.getString("custom_audio_bitrate", ""))
+        binding.etCustomWidth.setText(prefs.getString("custom_width", ""))
+        binding.etCustomHeight.setText(prefs.getString("custom_height", ""))
+
+        // Carregar perfil salvo
+        val savedProfile = prefs.getString("quality_profile", "MEDIUM") ?: "MEDIUM"
+        currentQualityProfile = QualityProfile.valueOf(savedProfile)
+        selectQualityProfile(currentQualityProfile)
 
         // Carregar imagem salva
         updateImagePreview()
@@ -184,31 +268,103 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun setupSaveButton() {
         binding.btnSave.setOnClickListener {
-            saveSettings()
-            finish()
+            if (validateInputs()) {
+                saveSettings()
+                finish()
+            }
         }
+    }
+
+    private fun validateInputs(): Boolean {
+        if (currentQualityProfile == QualityProfile.CUSTOM) {
+            // Validar campos customizados
+            val customVideoBitrate = binding.etCustomVideoBitrate.text.toString().trim()
+            val customAudioBitrate = binding.etCustomAudioBitrate.text.toString().trim()
+            val customWidth = binding.etCustomWidth.text.toString().trim()
+            val customHeight = binding.etCustomHeight.text.toString().trim()
+
+            if (customVideoBitrate.isEmpty() || customAudioBitrate.isEmpty() || 
+                customWidth.isEmpty() || customHeight.isEmpty()) {
+                Toast.makeText(this, "Preencha todos os campos customizados", Toast.LENGTH_SHORT).show()
+                return false
+            }
+
+            val videoBitrate = customVideoBitrate.toIntOrNull()
+            val audioBitrate = customAudioBitrate.toIntOrNull()
+            val width = customWidth.toIntOrNull()
+            val height = customHeight.toIntOrNull()
+
+            if (videoBitrate == null || videoBitrate < 500 || videoBitrate > 20000) {
+                Toast.makeText(this, "Bitrate de vídeo deve estar entre 500 e 20000 kbps", Toast.LENGTH_SHORT).show()
+                return false
+            }
+
+            if (audioBitrate == null || audioBitrate < 64 || audioBitrate > 320) {
+                Toast.makeText(this, "Bitrate de áudio deve estar entre 64 e 320 kbps", Toast.LENGTH_SHORT).show()
+                return false
+            }
+
+            if (width == null || width < 320 || width > 3840) {
+                Toast.makeText(this, "Largura deve estar entre 320 e 3840 pixels", Toast.LENGTH_SHORT).show()
+                return false
+            }
+
+            if (height == null || height < 240 || height > 2160) {
+                Toast.makeText(this, "Altura deve estar entre 240 e 2160 pixels", Toast.LENGTH_SHORT).show()
+                return false
+            }
+        }
+        return true
     }
 
     private fun saveSettings() {
         val prefs = getSharedPreferences("video_settings", Context.MODE_PRIVATE)
-        val resolution = binding.spinnerResolution.selectedItem.toString().split("x")
-        val width = resolution[0].toInt()
-        val height = resolution[1].toInt()
+        
+        var width: Int
+        var height: Int
+        var fps: Int
+        var videoBitrate: Int
+        var audioBitrate: Int
+
+        if (currentQualityProfile == QualityProfile.CUSTOM) {
+            // Usar valores customizados
+            width = binding.etCustomWidth.text.toString().toInt()
+            height = binding.etCustomHeight.text.toString().toInt()
+            fps = 30 // Padrão para customizado
+            videoBitrate = binding.etCustomVideoBitrate.text.toString().toInt()
+            audioBitrate = binding.etCustomAudioBitrate.text.toString().toInt()
+
+            // Salvar configurações customizadas
+            prefs.edit().apply {
+                putString("custom_video_bitrate", binding.etCustomVideoBitrate.text.toString())
+                putString("custom_audio_bitrate", binding.etCustomAudioBitrate.text.toString())
+                putString("custom_width", binding.etCustomWidth.text.toString())
+                putString("custom_height", binding.etCustomHeight.text.toString())
+                apply()
+            }
+        } else {
+            // Usar valores dos spinners
+            val resolution = binding.spinnerResolution.selectedItem.toString().split("x")
+            width = resolution[0].toInt()
+            height = resolution[1].toInt()
+            fps = binding.spinnerFps.selectedItem.toString().toInt()
+            videoBitrate = binding.spinnerVideoBitrate.selectedItem.toString().toInt()
+            audioBitrate = binding.spinnerAudioBitrate.selectedItem.toString().toInt()
+        }
         
         prefs.edit().apply {
             putInt("width", width)
             putInt("height", height)
-            putInt("fps", binding.spinnerFps.selectedItem.toString().toInt())
-            putInt("video_bitrate", binding.spinnerVideoBitrate.selectedItem.toString().toInt())
-            putInt("audio_bitrate", binding.spinnerAudioBitrate.selectedItem.toString().toInt())
+            putInt("fps", fps)
+            putInt("video_bitrate", videoBitrate)
+            putInt("audio_bitrate", audioBitrate)
             putInt("sample_rate", binding.spinnerSampleRate.selectedItem.toString().toInt())
             putBoolean("adaptive_bitrate", binding.switchAdaptiveBitrate.isChecked)
-            
-            // NOVO: Salvar opção de Bola Invisível
-            putBoolean("invisible_widget", binding.switchInvisibleWidget.isChecked)
-            
+            putString("quality_profile", currentQualityProfile.name)
             apply()
         }
+
+        Toast.makeText(this, "Configurações salvas com sucesso!", Toast.LENGTH_SHORT).show()
     }
 
     override fun onSupportNavigateUp(): Boolean {

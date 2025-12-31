@@ -10,7 +10,6 @@ import android.view.*
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.view.ContextThemeWrapper
-import android.graphics.Color
 
 class FloatingControlService : Service() {
 
@@ -21,8 +20,6 @@ class FloatingControlService : Service() {
     private var isMenuExpanded = false
     private var isMuted = false
     private var isPrivacyOn = false
-    
-    private var isInvisibleMode = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -35,39 +32,16 @@ class FloatingControlService : Service() {
 
         floatingView = inflater.inflate(R.layout.widget_floating_control, null)
 
-        // CORREÇÃO DO QUADRADO PRETO:
-        // 1. Removemos o setLayerType(SOFTWARE) que causa fundo preto em transparências.
-        // 2. Garantimos que o fundo da view raiz seja transparente.
-        // floatingView.setBackgroundColor(Color.TRANSPARENT) - Removido, pois o problema é com o tamanho da view no modo invisível.
-        
         setupLayoutParams()
         setupViews()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.hasExtra("invisible_mode") == true) {
-            val newMode = intent.getBooleanExtra("invisible_mode", false)
-            if (newMode != isInvisibleMode) {
-                isInvisibleMode = newMode
-                if (::layoutParams.isInitialized && ::floatingView.isInitialized) {
-                    updateLayoutFlag()
-                    try {
-                        windowManager.updateViewLayout(floatingView, layoutParams)
-                    } catch (e: Exception) {
-                        if (floatingView.windowToken != null) {
-                            windowManager.removeView(floatingView)
-                        }
-                        setupLayoutParams()
-                        windowManager.addView(floatingView, layoutParams)
-                    }
-                }
-            }
-        }
-
         if (intent?.action == "UPDATE_HEALTH") {
             val color = intent.getStringExtra("health_color")
             updateHealthIndicator(color)
         }
+        
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -93,14 +67,9 @@ class FloatingControlService : Service() {
             WindowManager.LayoutParams.TYPE_PHONE
         }
 
-        var flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS // Permite desenhar sem limites
+        val flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
 
-        if (isInvisibleMode) {
-            flags = flags or WindowManager.LayoutParams.FLAG_SECURE
-        }
-
-        // CORREÇÃO: Usar TRANSLUCENT em vez de TRANSPARENT ajuda a evitar o quadrado preto
         layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -111,20 +80,6 @@ class FloatingControlService : Service() {
         layoutParams.gravity = Gravity.TOP or Gravity.START
         layoutParams.x = 20
         layoutParams.y = 200
-    }
-    
-    private fun updateLayoutFlag() {
-        if (isInvisibleMode) {
-            layoutParams.flags = layoutParams.flags or WindowManager.LayoutParams.FLAG_SECURE
-            // CORREÇÃO: Reduz o tamanho da view para 1x1 pixel no modo invisível
-            layoutParams.width = 1
-            layoutParams.height = 1
-        } else {
-            layoutParams.flags = layoutParams.flags and WindowManager.LayoutParams.FLAG_SECURE.inv()
-            // Restaura o tamanho normal
-            layoutParams.width = WindowManager.LayoutParams.WRAP_CONTENT
-            layoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT
-        }
     }
 
     private fun setupViews() {
