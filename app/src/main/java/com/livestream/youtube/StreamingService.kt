@@ -73,17 +73,10 @@ class StreamingService : Service() {
                 startStreaming()
                 
                 try {
-                    // Inicia o widget flutuante
-                    val widgetIntent = Intent(this, FloatingControlService::class.java)
-                    startForegroundService(widgetIntent)
+                    // Inicia o widget flutuante como serviço normal
+                    startService(Intent(this, FloatingControlService::class.java))
                 } catch (e: Exception) {
                     Log.e(TAG, "Erro ao iniciar widget", e)
-                    // Tentar iniciar como serviço normal se foreground falhar
-                    try {
-                        startService(Intent(this, FloatingControlService::class.java))
-                    } catch (e2: Exception) {
-                        Log.e(TAG, "Erro ao iniciar widget (fallback)", e2)
-                    }
                 }
             }
             ACTION_STOP -> {
