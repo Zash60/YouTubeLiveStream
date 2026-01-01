@@ -11,8 +11,11 @@ import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.util.Log
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.pedro.library.rtmp.RtmpDisplay
 import com.pedro.common.ConnectChecker
@@ -140,7 +143,9 @@ class StreamingService : Service() {
     private fun startStreaming() {
         val prefs = getSharedPreferences("stream_settings", Context.MODE_PRIVATE)
         val streamKey = prefs.getString("stream_key", "") ?: ""
-        val rtmpUrl = prefs.getString("rtmp_url", "rtmp://a.rtmp.youtube.com/live2") ?: ""
+        // Garante URL padrão se vier vazia ou incorreta
+        val rtmpUrl = prefs.getString("rtmp_url", "rtmp://a.rtmp.youtube.com/live2") 
+            ?.takeIf { it.length > 10 } ?: "rtmp://a.rtmp.youtube.com/live2"
         
         val videoPrefs = getSharedPreferences("video_settings", Context.MODE_PRIVATE)
         var width = videoPrefs.getInt("width", 1280)
@@ -176,7 +181,15 @@ class StreamingService : Service() {
             rtmpDisplay = RtmpDisplay(this, true, object : ConnectChecker {
                 override fun onConnectionStarted(url: String) {}
                 override fun onConnectionSuccess() { isRunning = true }
-                override fun onConnectionFailed(reason: String) { stopStreaming() }
+                
+                override fun onConnectionFailed(reason: String) { 
+                    Log.e(TAG, "Connection failed: $reason")
+                    // MOSTRAR ERRO PRO USUÁRIO
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(applicationContext, "Erro conexão: Verifique Chave e Internet", Toast.LENGTH_LONG).show()
+                    }
+                    stopStreaming() 
+                }
                 
                 override fun onNewBitrate(bitrate: Long) {
                     // 1. Bitrate Adaptativo
@@ -185,7 +198,6 @@ class StreamingService : Service() {
                     }
                     
                     // 2. Enviar Saúde para o Widget
-                    // Verde: > 80% do alvo | Amarelo: > 50% | Vermelho: < 50%
                     val healthColor = when {
                         bitrate >= targetVideoBitrate * 0.8 -> "GREEN"
                         bitrate >= targetVideoBitrate * 0.5 -> "YELLOW"
@@ -200,7 +212,11 @@ class StreamingService : Service() {
                 }
                 
                 override fun onDisconnect() { isRunning = false }
-                override fun onAuthError() {}
+                override fun onAuthError() {
+                     Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(applicationContext, "Erro Autenticação: Chave inválida", Toast.LENGTH_LONG).show()
+                    }
+                }
                 override fun onAuthSuccess() {}
             })
 
@@ -223,6 +239,9 @@ class StreamingService : Service() {
                 if (prepareVideo && prepareAudio) {
                     display.startStream("$rtmpUrl/$streamKey")
                 } else {
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(applicationContext, "Erro ao preparar áudio/vídeo", Toast.LENGTH_SHORT).show()
+                    }
                     stopStreaming()
                 }
             }
