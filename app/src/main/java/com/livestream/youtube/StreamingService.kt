@@ -30,14 +30,11 @@ class StreamingService : Service() {
     private var resultCode: Int = 0
     private var data: Intent? = null
     
-    // Variável para armazenar a escolha do usuário
     private var orientationMode = "AUTO"
-
     private var useAdaptiveBitrate = true
     private var targetVideoBitrate = 4000 * 1000
     private var lastBitrateChange = 0L
     
-    // Imagem de Pausa
     private var pauseBitmap: Bitmap? = null
     private var imageFilter: ImageObjectFilterRender? = null
 
@@ -52,10 +49,9 @@ class StreamingService : Service() {
             val file = File(filesDir, "pause_image.png")
             if (file.exists()) {
                 pauseBitmap = BitmapFactory.decodeFile(file.absolutePath)
-                Log.d(TAG, "Imagem de pausa carregada")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Erro ao carregar imagem", e)
+            Log.e(TAG, "Erro imagem", e)
         }
     }
 
@@ -76,10 +72,9 @@ class StreamingService : Service() {
                 startStreaming()
                 
                 try {
-                    // Inicia o widget flutuante como serviço normal
                     startService(Intent(this, FloatingControlService::class.java))
                 } catch (e: Exception) {
-                    Log.e(TAG, "Erro ao iniciar widget", e)
+                    Log.e(TAG, "Erro widget", e)
                 }
             }
             ACTION_STOP -> {
@@ -134,7 +129,7 @@ class StreamingService : Service() {
                         display.enableAudio()
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Erro toggling privacy", e)
+                    Log.e(TAG, "Erro privacy", e)
                 }
             }
         }
@@ -142,24 +137,34 @@ class StreamingService : Service() {
 
     private fun startStreaming() {
         val prefs = getSharedPreferences("stream_settings", Context.MODE_PRIVATE)
-        val streamKey = prefs.getString("stream_key", "") ?: ""
-        // Garante URL padrão se vier vazia ou incorreta
-        val rtmpUrl = prefs.getString("rtmp_url", "rtmp://a.rtmp.youtube.com/live2") 
-            ?.takeIf { it.length > 10 } ?: "rtmp://a.rtmp.youtube.com/live2"
+        var streamKey = prefs.getString("stream_key", "") ?: ""
+        var rtmpUrl = prefs.getString("rtmp_url", "rtmp://a.rtmp.youtube.com/live2") ?: "rtmp://a.rtmp.youtube.com/live2"
         
+        // --- CORREÇÃO CRÍTICA DE URL E CHAVE ---
+        rtmpUrl = rtmpUrl.trim()
+        streamKey = streamKey.trim()
+
+        // Remove barra final se o usuário colocou acidentalmente
+        if (rtmpUrl.endsWith("/")) {
+            rtmpUrl = rtmpUrl.dropLast(1)
+        }
+
+        // Se a URL estiver "quebrada" (como no log anterior), forçar a correta
+        if (rtmpUrl.contains("rtmp://a.rtmp.") && rtmpUrl.length < 25) {
+            Log.w(TAG, "URL inválida detectada ($rtmpUrl), corrigindo automaticamente...")
+            rtmpUrl = "rtmp://a.rtmp.youtube.com/live2"
+        }
+        // ---------------------------------------
+
         val videoPrefs = getSharedPreferences("video_settings", Context.MODE_PRIVATE)
         var width = videoPrefs.getInt("width", 1280)
         var height = videoPrefs.getInt("height", 720)
         
+        // Ajuste de Orientação
         val systemOrientation = resources.configuration.orientation
-        
         when (orientationMode) {
-            "LANDSCAPE" -> {
-                if (width < height) { val t = width; width = height; height = t }
-            }
-            "PORTRAIT" -> {
-                if (width > height) { val t = width; width = height; height = t }
-            }
+            "LANDSCAPE" -> if (width < height) { val t = width; width = height; height = t }
+            "PORTRAIT" -> if (width > height) { val t = width; width = height; height = t }
             else -> { 
                 if (systemOrientation == Configuration.ORIENTATION_LANDSCAPE) {
                     if (width < height) { val t = width; width = height; height = t }
@@ -174,48 +179,54 @@ class StreamingService : Service() {
         val audioBitrate = videoPrefs.getInt("audio_bitrate", 128) * 1000
         val sampleRate = videoPrefs.getInt("sample_rate", 44100)
         useAdaptiveBitrate = videoPrefs.getBoolean("adaptive_bitrate", true)
-
         val dpi = resources.displayMetrics.densityDpi
 
         try {
             rtmpDisplay = RtmpDisplay(this, true, object : ConnectChecker {
                 override fun onConnectionStarted(url: String) {}
-                override fun onConnectionSuccess() { isRunning = true }
+                override fun onConnectionSuccess() { 
+                    isRunning = true 
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(applicationContext, "Conectado com sucesso! 🟢", Toast.LENGTH_SHORT).show()
+                    }
+                }
                 
                 override fun onConnectionFailed(reason: String) { 
-                    Log.e(TAG, "Connection failed: $reason")
-                    // MOSTRAR ERRO PRO USUÁRIO
+                    Log.e(TAG, "FALHA CONEXÃO: $reason")
                     Handler(Looper.getMainLooper()).post {
-                        Toast.makeText(applicationContext, "Erro conexão: Verifique Chave e Internet", Toast.LENGTH_LONG).show()
+                        // Mensagem mais detalhada para debug
+                        Toast.makeText(applicationContext, "Erro: Não foi possível conectar ao YouTube.\nVerifique se a chave está correta.", Toast.LENGTH_LONG).show()
                     }
                     stopStreaming() 
                 }
                 
                 override fun onNewBitrate(bitrate: Long) {
-                    // 1. Bitrate Adaptativo
-                    if (useAdaptiveBitrate && isRunning) {
-                        handleAdaptiveBitrate(bitrate)
-                    }
+                    if (useAdaptiveBitrate && isRunning) handleAdaptiveBitrate(bitrate)
                     
-                    // 2. Enviar Saúde para o Widget
                     val healthColor = when {
                         bitrate >= targetVideoBitrate * 0.8 -> "GREEN"
                         bitrate >= targetVideoBitrate * 0.5 -> "YELLOW"
                         else -> "RED"
                     }
                     
-                    val intent = Intent(this@StreamingService, FloatingControlService::class.java).apply {
+                    startService(Intent(this@StreamingService, FloatingControlService::class.java).apply {
                         action = "UPDATE_HEALTH"
                         putExtra("health_color", healthColor)
-                    }
-                    startService(intent)
+                    })
                 }
                 
-                override fun onDisconnect() { isRunning = false }
+                override fun onDisconnect() { 
+                    isRunning = false 
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(applicationContext, "Desconectado", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                
                 override fun onAuthError() {
                      Handler(Looper.getMainLooper()).post {
-                        Toast.makeText(applicationContext, "Erro Autenticação: Chave inválida", Toast.LENGTH_LONG).show()
+                        Toast.makeText(applicationContext, "Erro na Chave de Transmissão!", Toast.LENGTH_LONG).show()
                     }
+                    stopStreaming()
                 }
                 override fun onAuthSuccess() {}
             })
@@ -237,16 +248,19 @@ class StreamingService : Service() {
                 }
 
                 if (prepareVideo && prepareAudio) {
-                    display.startStream("$rtmpUrl/$streamKey")
+                    // Monta a URL final
+                    val finalUrl = "$rtmpUrl/$streamKey"
+                    Log.d(TAG, "Tentando conectar em: $rtmpUrl/HIDDEN_KEY")
+                    display.startStream(finalUrl)
                 } else {
                     Handler(Looper.getMainLooper()).post {
-                        Toast.makeText(applicationContext, "Erro ao preparar áudio/vídeo", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(applicationContext, "Erro hardware: Reinicie o app", Toast.LENGTH_SHORT).show()
                     }
                     stopStreaming()
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Erro ao iniciar streaming", e)
+            Log.e(TAG, "Erro fatal", e)
             stopStreaming()
         }
     }
@@ -261,8 +275,7 @@ class StreamingService : Service() {
                     val newBitrate = (targetVideoBitrate * 0.8).toInt()
                     display.setVideoBitrateOnFly(newBitrate)
                     lastBitrateChange = now
-                } 
-                else if (currentBitrate > targetVideoBitrate * 0.9) {
+                } else if (currentBitrate > targetVideoBitrate * 0.9) {
                      display.setVideoBitrateOnFly(targetVideoBitrate)
                      lastBitrateChange = now
                 }
@@ -278,43 +291,30 @@ class StreamingService : Service() {
             }
             rtmpDisplay = null
             isRunning = false
-            
-            // Parar o widget flutuante
             try {
                 stopService(Intent(this, FloatingControlService::class.java))
-            } catch (e: Exception) {
-                Log.e(TAG, "Erro ao parar widget", e)
-            }
+            } catch (e: Exception) {}
         } catch (e: Exception) {
-            Log.e(TAG, "Erro ao parar streaming", e)
+            Log.e(TAG, "Erro stop", e)
         }
     }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "YouTube Live Stream",
-                NotificationManager.IMPORTANCE_LOW
-            )
+            val channel = NotificationChannel(CHANNEL_ID, "Live Stream", NotificationManager.IMPORTANCE_LOW)
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }
     }
 
     private fun createNotification(): Notification {
-        val stopIntent = Intent(this, StreamingService::class.java).apply {
-            action = ACTION_STOP
-        }
-        val stopPendingIntent = PendingIntent.getService(
-            this, 0, stopIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val stopIntent = Intent(this, StreamingService::class.java).apply { action = ACTION_STOP }
+        val stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("🔴 Live Streaming")
-            .setContentText("Tap to open")
+            .setContentTitle("🔴 Live YouTube")
+            .setContentText("Transmitindo...")
             .setSmallIcon(android.R.drawable.ic_menu_camera)
-            .addAction(android.R.drawable.ic_media_pause, "Stop", stopPendingIntent)
+            .addAction(android.R.drawable.ic_media_pause, "Parar", stopPendingIntent)
             .setOngoing(true)
             .build()
     }
