@@ -49,9 +49,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // CORREÇÃO VISUAL: Removido o código que escondia a barra de status
-        // e causava sobreposição no título do app.
-
         mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) 
             as MediaProjectionManager
 
@@ -129,6 +126,7 @@ class MainActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("stream_settings", Context.MODE_PRIVATE)
         prefs.edit().apply {
             putString("stream_key", binding.etStreamKey.text.toString().trim())
+            // CORREÇÃO AQUI: URL completa
             putString("rtmp_url", binding.etRtmpUrl.text.toString().trim()
                 .ifEmpty { "rtmp://a.rtmp.youtube.com/live2" })
             apply()
@@ -138,6 +136,7 @@ class MainActivity : AppCompatActivity() {
     private fun loadSavedSettings() {
         val prefs = getSharedPreferences("stream_settings", Context.MODE_PRIVATE)
         binding.etStreamKey.setText(prefs.getString("stream_key", ""))
+        // CORREÇÃO AQUI: URL completa no padrão
         binding.etRtmpUrl.setText(prefs.getString("rtmp_url", "rtmp://a.rtmp.youtube.com/live2"))
     }
 
