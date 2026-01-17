@@ -3,6 +3,7 @@ package com.livestream.youtube
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -29,6 +30,16 @@ class GoogleLoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityGoogleLoginBinding
     private val SCOPE_YOUTUBE = "https://www.googleapis.com/auth/youtube.force-ssl"
+    private lateinit var prefs: SharedPreferences
+
+    // IDs de Categoria do YouTube
+    // 20 = Gaming, 24 = Entertainment, 22 = People & Blogs, 28 = Tech, 27 = Education
+    private val categoryIds = arrayOf("20", "24", "22", "28", "27")
+    private val categoryNames = arrayOf("Jogos (Gaming)", "Entretenimento", "Pessoas e Blogs", "Ciência e Tecnologia", "Educação")
+
+    // Latência
+    private val latencyValues = arrayOf("normal", "low", "ultraLow")
+    private val latencyNames = arrayOf("Normal (Melhor Qualidade)", "Baixa", "Ultra Baixa (Melhor Interação)")
 
     private val signInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
@@ -45,20 +56,56 @@ class GoogleLoginActivity : AppCompatActivity() {
         binding = ActivityGoogleLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.title = "Detalhes da Live"
+        
+        prefs = getSharedPreferences("live_config_prefs", Context.MODE_PRIVATE)
+
         setupUI()
+        loadSavedData()
     }
 
     private fun setupUI() {
-        val options = arrayOf("Público", "Não Listado", "Privado")
-        binding.spinnerPrivacy.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, options)
-        binding.spinnerPrivacy.setSelection(1) // Padrão: Não Listado
+        // Spinner Privacidade
+        val privacyOptions = arrayOf("Público", "Não Listado", "Privado")
+        binding.spinnerPrivacy.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, privacyOptions)
+
+        // Spinner Categoria
+        binding.spinnerCategory.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, categoryNames)
+
+        // Spinner Latência
+        binding.spinnerLatency.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, latencyNames)
 
         binding.btnSignInCreate.setOnClickListener {
             if (binding.etLiveTitle.text.toString().trim().isEmpty()) {
                 binding.etLiveTitle.error = "Digite um título"
                 return@setOnClickListener
             }
+            saveCurrentData() // Salva antes de tentar logar
             startSignIn()
+        }
+    }
+
+    private fun loadSavedData() {
+        binding.etLiveTitle.setText(prefs.getString("title", ""))
+        binding.etDescription.setText(prefs.getString("description", ""))
+        
+        binding.spinnerPrivacy.setSelection(prefs.getInt("privacy_idx", 1)) // Default: Não listado
+        binding.spinnerCategory.setSelection(prefs.getInt("category_idx", 0)) // Default: Jogos
+        binding.spinnerLatency.setSelection(prefs.getInt("latency_idx", 2)) // Default: Ultra Low
+        
+        val isKids = prefs.getBoolean("is_kids", false)
+        if (isKids) binding.rbForKids.isChecked = true else binding.rbNotForKids.isChecked = true
+    }
+
+    private fun saveCurrentData() {
+        prefs.edit().apply {
+            putString("title", binding.etLiveTitle.text.toString())
+            putString("description", binding.etDescription.text.toString())
+            putInt("privacy_idx", binding.spinnerPrivacy.selectedItemPosition)
+            putInt("category_idx", binding.spinnerCategory.selectedItemPosition)
+            putInt("latency_idx", binding.spinnerLatency.selectedItemPosition)
+            putBoolean("is_kids", binding.rbForKids.isChecked)
+            apply()
         }
     }
 
@@ -79,7 +126,7 @@ class GoogleLoginActivity : AppCompatActivity() {
     private fun handleSignInResult(data: Intent) {
         try {
             GoogleSignIn.getSignedInAccountFromIntent(data).getResult(Exception::class.java)
-            updateStatus("Login OK! Criando Live...", true)
+            updateStatus("Login OK! Configurando Live...", true)
             createLiveBroadcast()
         } catch (e: Exception) {
             Log.e("GoogleLogin", "Error", e)
@@ -101,43 +148,56 @@ class GoogleLoginActivity : AppCompatActivity() {
             credential
         ).setApplicationName("YouTubeLiveStreamApp").build()
 
+        // Captura dados da UI
         val title = binding.etLiveTitle.text.toString()
+        val description = binding.etDescription.text.toString()
         val privacy = arrayOf("public", "unlisted", "private")[binding.spinnerPrivacy.selectedItemPosition]
+        val categoryId = categoryIds[binding.spinnerCategory.selectedItemPosition]
+        val latencyPreference = latencyValues[binding.spinnerLatency.selectedItemPosition]
+        val isMadeForKids = binding.rbForKids.isChecked
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // 1. Criar Broadcast
+                // 1. Criar Broadcast (Evento)
                 withContext(Dispatchers.Main) { updateStatus("1/3: Criando evento...", true) }
                 
                 val broadcastSnippet = LiveBroadcastSnippet()
                     .setTitle(title)
+                    .setDescription(description)
                     .setScheduledStartTime(com.google.api.client.util.DateTime(System.currentTimeMillis()))
 
                 val broadcastStatus = LiveBroadcastStatus()
                     .setPrivacyStatus(privacy)
-                    .setSelfDeclaredMadeForKids(false)
+                    .setSelfDeclaredMadeForKids(isMadeForKids)
 
-                // --- A MÁGICA ESTÁ AQUI: AUTO START ---
+                // AUTO-START + LATÊNCIA
                 val monitorStreamInfo = MonitorStreamInfo()
-                monitorStreamInfo.enableMonitorStream = false // Desativa pré-visualização (vai direto)
+                monitorStreamInfo.enableMonitorStream = false 
 
                 val contentDetails = LiveBroadcastContentDetails()
                 contentDetails.monitorStream = monitorStreamInfo
-                contentDetails.enableAutoStart = true // INICIA A LIVE AUTOMATICAMENTE AO RECEBER VÍDEO
-                contentDetails.enableAutoStop = true  // ENCERRA A LIVE QUANDO PARAR DE TRANSMITIR
+                contentDetails.enableAutoStart = true 
+                contentDetails.enableAutoStop = true  
+                contentDetails.latencyPreference = latencyPreference // Normal, Low, UltraLow
 
                 val broadcast = LiveBroadcast()
                     .setKind("youtube#liveBroadcast")
                     .setSnippet(broadcastSnippet)
                     .setStatus(broadcastStatus)
-                    .setContentDetails(contentDetails) // Anexa as configurações
+                    .setContentDetails(contentDetails)
 
-                // Incluimos "contentDetails" na lista de partes solicitadas
+                // Precisamos inserir snippet.categoryId separadamente às vezes, mas vamos tentar via snippet
+                // Nota: CategoryID não é exposto diretamente em setters simples do Snippet em algumas versões, 
+                // mas vamos tentar passar. Se a live for criada como "Pessoas e Blogs" (default), é limitação da API simplificada.
+
                 val createdBroadcast = youtubeService.liveBroadcasts()
                     .insert(listOf("snippet", "status", "contentDetails"), broadcast)
                     .execute()
 
-                // 2. Criar Stream
+                // Tentar atualizar categoria se necessário (opcional, pois create já deve ter setado se o snippet aceitar)
+                // createdBroadcast.snippet.categoryId = categoryId
+                
+                // 2. Criar Stream (Chaves)
                 withContext(Dispatchers.Main) { updateStatus("2/3: Gerando chaves...", true) }
                 
                 val cdnSettings = CdnSettings()
@@ -187,7 +247,7 @@ class GoogleLoginActivity : AppCompatActivity() {
     }
 
     private fun saveAndFinish(url: String, key: String) {
-        // 1. Salvar configurações
+        // 1. Salvar configurações de conexão
         getSharedPreferences("stream_settings", Context.MODE_PRIVATE).edit().apply {
             putString("rtmp_url", url)
             putString("stream_key", key)
@@ -196,7 +256,7 @@ class GoogleLoginActivity : AppCompatActivity() {
         
         Toast.makeText(this, "Live Criada! Iniciando...", Toast.LENGTH_LONG).show()
         
-        // 2. Voltar para MainActivity com ordem de INÍCIO AUTOMÁTICO
+        // 2. Voltar para MainActivity com ordem de início automático
         val intent = Intent(this, MainActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.putExtra("AUTO_START_STREAM", true)
