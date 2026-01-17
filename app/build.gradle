@@ -15,11 +15,9 @@ android {
         versionName "1.0"
     }
 
-    // --- CONFIGURAÇÃO DA CHAVE DEFINITIVA ---
     signingConfigs {
         release {
-            // O arquivo deve estar na pasta /app/ do projeto
-            // Se ainda não gerou a chave no Termux, comente estas linhas abaixo temporariamente
+            // Se você já criou a chave no Termux, descomente as linhas abaixo:
             storeFile file("sua_chave.jks") 
             storePassword "123456"
             keyAlias "meualias"
@@ -29,7 +27,7 @@ android {
 
     buildTypes {
         debug {
-            // Se comentou o signingConfigs acima, comente esta linha também
+            // Se descomentou acima, descomente aqui também:
             signingConfig signingConfigs.release
             minifyEnabled false
             debuggable true
@@ -80,11 +78,12 @@ dependencies {
     // RootEncoder
     implementation 'com.github.pedroSG94.RootEncoder:library:2.6.6'
 
-    // Google Login e YouTube API (Versão atualizada)
+    // Google Login e YouTube API (Versão solicitada 2025)
     implementation 'com.google.android.gms:play-services-auth:20.7.0'
     implementation('com.google.api-client:google-api-client-android:2.2.0') {
         exclude group: 'org.apache.httpcomponents'
     }
-    implementation 'com.google.apis:google-api-services-youtube:v3-rev20240124-2.0.0'
+    // AQUI ESTÁ A VERSÃO ESPECÍFICA QUE VOCÊ PEDIU
+    implementation 'com.google.apis:google-api-services-youtube:v3-rev20251217-2.0.0'
     implementation 'com.google.http-client:google-http-client-gson:1.43.3'
 }
