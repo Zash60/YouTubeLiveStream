@@ -59,7 +59,7 @@ class FloatingControlService : Service() {
                 else -> mainIcon.setBackgroundResource(R.drawable.bg_circle_red)
             }
         } catch (e: Exception) {
-            // Ignorar erros de atualização do indicador
+            // Ignorar erros
         }
     }
 
@@ -88,25 +88,14 @@ class FloatingControlService : Service() {
 
     private fun setupViews() {
         try {
-            // Verificar se a view já está adicionada
             if (floatingView.windowToken == null) {
                 windowManager.addView(floatingView, layoutParams)
             }
         } catch (e: Exception) {
-            // Se já existe, tentar atualizar
             try {
-                windowManager.updateViewLayout(floatingView, layoutParams)
-            } catch (updateException: Exception) {
-                // Se falhar, tentar remover e readicionar
-                try {
-                    windowManager.removeView(floatingView)
-                } catch (removeException: Exception) {}
-                try {
-                    windowManager.addView(floatingView, layoutParams)
-                } catch (addException: Exception) {
-                    addException.printStackTrace()
-                }
-            }
+                windowManager.removeView(floatingView)
+                windowManager.addView(floatingView, layoutParams)
+            } catch (ignored: Exception) {}
         }
 
         setupTouchListener()
@@ -167,8 +156,9 @@ class FloatingControlService : Service() {
     private fun togglePrivacy(btnPrivacy: ImageView, mainIcon: ImageView) {
         isPrivacyOn = !isPrivacyOn
 
+        // CORRIGIDO: Usando as constantes corretas definidas no StreamingService
         val intent = Intent(this, StreamingService::class.java).apply {
-            action = StreamingService.ACTION_PRIVACY_MODE
+            action = StreamingService.ACTION_PRIVACY
             putExtra("privacy", isPrivacyOn)
         }
         startService(intent)
@@ -196,8 +186,10 @@ class FloatingControlService : Service() {
 
     private fun toggleMute(btnMute: ImageView) {
         isMuted = !isMuted
+        
+        // CORRIGIDO: Usando as constantes corretas
         val intent = Intent(this, StreamingService::class.java).apply {
-            action = StreamingService.ACTION_MUTE_AUDIO
+            action = StreamingService.ACTION_MUTE
             putExtra("mute", isMuted)
         }
         startService(intent)
@@ -258,14 +250,10 @@ class FloatingControlService : Service() {
 
     override fun onDestroy() {
         try {
-            if (::floatingView.isInitialized) {
-                if (floatingView.windowToken != null) {
-                    windowManager.removeView(floatingView)
-                }
+            if (floatingView.windowToken != null) {
+                windowManager.removeView(floatingView)
             }
-        } catch (e: Exception) {
-            // Ignorar erros de limpeza
-        }
+        } catch (e: Exception) {}
         super.onDestroy()
     }
 }
