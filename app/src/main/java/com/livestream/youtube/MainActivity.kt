@@ -28,7 +28,7 @@ class MainActivity : AppCompatActivity() {
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             startStreamingService(result.resultCode, result.data!!)
         } else {
-            Toast.makeText(this, "Permissão negada", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Permissão de captura negada", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -41,7 +41,34 @@ class MainActivity : AppCompatActivity() {
 
         setupUI()
         checkPermissions()
+        // Carrega as configurações iniciais
         loadSavedSettings()
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent) // Atualiza o intent para processar no onResume
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 1. Atualiza o status do serviço
+        isStreaming = StreamingService.isRunning
+        updateUI()
+        
+        // 2. Recarrega as chaves (caso tenham mudado via Google Login)
+        loadSavedSettings()
+
+        // 3. Verifica se deve iniciar automaticamente (vindo do Google Login)
+        if (intent?.getBooleanExtra("AUTO_START_STREAM", false) == true) {
+            if (!isStreaming) {
+                // Limpa o flag para não ficar iniciando em loop se girar a tela
+                intent?.removeExtra("AUTO_START_STREAM")
+                
+                // Simula o clique no botão para pedir permissão
+                binding.btnStartStream.performClick()
+            }
+        }
     }
 
     private fun setupUI() {
@@ -56,9 +83,12 @@ class MainActivity : AppCompatActivity() {
 
         binding.btnStartStream.setOnClickListener {
             if (!isStreaming) {
-                if (validateInputs() && checkOverlayPermission()) {
-                    saveSettings()
-                    screenCaptureRequest.launch(mediaProjectionManager.createScreenCaptureIntent())
+                if (validateInputs()) {
+                    if (checkOverlayPermission()) {
+                        saveSettings()
+                        // Aqui pede a permissão de captura de tela
+                        screenCaptureRequest.launch(mediaProjectionManager.createScreenCaptureIntent())
+                    }
                 }
             } else {
                 stopStreaming()
@@ -90,6 +120,8 @@ class MainActivity : AppCompatActivity() {
         ContextCompat.startForegroundService(this, i)
         isStreaming = true
         updateUI()
+        // Move o app para o fundo para mostrar o jogo/tela
+        moveTaskToBack(true)
     }
 
     private fun stopStreaming() {
@@ -100,13 +132,21 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkOverlayPermission(): Boolean {
         if (Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(this)) {
+            Toast.makeText(this, "Conceda permissão de sobreposição para o widget", Toast.LENGTH_LONG).show()
             startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
             return false
         }
         return true
     }
 
-    private fun validateInputs() = binding.etStreamKey.text.isNotEmpty()
+    private fun validateInputs(): Boolean {
+        val key = binding.etStreamKey.text.toString().trim()
+        if (key.isEmpty()) {
+            binding.etStreamKey.error = "Chave vazia"
+            return false
+        }
+        return true
+    }
 
     private fun saveSettings() {
         getSharedPreferences("stream_settings", Context.MODE_PRIVATE).edit().apply {
@@ -118,8 +158,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadSavedSettings() {
         val prefs = getSharedPreferences("stream_settings", Context.MODE_PRIVATE)
-        binding.etStreamKey.setText(prefs.getString("stream_key", ""))
-        binding.etRtmpUrl.setText(prefs.getString("rtmp_url", "rtmp://a.rtmp.youtube.com/live2"))
+        val key = prefs.getString("stream_key", "")
+        val url = prefs.getString("rtmp_url", "rtmp://a.rtmp.youtube.com/live2")
+        
+        binding.etStreamKey.setText(key)
+        binding.etRtmpUrl.setText(url)
     }
 
     private fun checkPermissions() {
@@ -130,15 +173,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateUI() {
-        binding.btnStartStream.text = if (isStreaming) "⏹ Parar" else "▶ Iniciar Transmissão"
-        binding.btnStartStream.backgroundTintList = ContextCompat.getColorStateList(this, if (isStreaming) android.R.color.holo_red_dark else android.R.color.holo_red_light)
-        binding.statusText.text = if (isStreaming) "🔴 AO VIVO" else "⚫ Offline"
-        binding.statusText.setTextColor(if (isStreaming) 0xFFFF0000.toInt() else 0xFF888888.toInt())
-    }
-
-    override fun onResume() {
-        super.onResume()
-        isStreaming = StreamingService.isRunning
-        updateUI()
+        if (isStreaming) {
+            binding.btnStartStream.text = "⏹ Parar Transmissão"
+            binding.btnStartStream.backgroundTintList = ContextCompat.getColorStateList(this, android.R.color.holo_red_dark)
+            binding.statusText.text = "🔴 AO VIVO"
+            binding.statusText.setTextColor(0xFFFF0000.toInt())
+            binding.btnLoginGoogle.isEnabled = false
+        } else {
+            binding.btnStartStream.text = "▶ Iniciar Transmissão"
+            binding.btnStartStream.backgroundTintList = ContextCompat.getColorStateList(this, android.R.color.holo_red_light)
+            binding.statusText.text = "⚫ Offline"
+            binding.statusText.setTextColor(0xFF888888.toInt())
+            binding.btnLoginGoogle.isEnabled = true
+        }
     }
 }
