@@ -9,63 +9,139 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp"
-        android:gravity="center_vertical">
+        android:padding="24dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="📡 Criar Live no YouTube"
+            android:text="📡 Configurar Live"
             android:textColor="#ffffff"
             android:textSize="26sp"
             android:textStyle="bold"
             android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="40dp"/>
+            android:layout_marginBottom="24dp"/>
 
+        <!-- TÍTULO -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Título da Transmissão"
+            android:text="Título"
             android:textColor="#cccccc"
-            android:layout_marginBottom="8dp"/>
-
+            android:layout_marginBottom="4dp"/>
         <EditText
             android:id="@+id/etLiveTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Ex: Minha Gameplay Incrível"
+            android:hint="Ex: Jogando Minecraft Hardcore"
             android:background="@drawable/edit_text_background"
             android:textColor="#ffffff"
             android:textColorHint="#666666"
-            android:padding="16dp"
-            android:layout_marginBottom="24dp"/>
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"/>
 
+        <!-- DESCRIÇÃO -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Descrição"
+            android:textColor="#cccccc"
+            android:layout_marginBottom="4dp"/>
+        <EditText
+            android:id="@+id/etDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Links, redes sociais, sobre a live..."
+            android:background="@drawable/edit_text_background"
+            android:textColor="#ffffff"
+            android:textColorHint="#666666"
+            android:padding="12dp"
+            android:gravity="top"
+            android:minLines="3"
+            android:inputType="textMultiLine"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- VISIBILIDADE -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Visibilidade"
             android:textColor="#cccccc"
-            android:layout_marginBottom="8dp"/>
-
+            android:layout_marginBottom="4dp"/>
         <Spinner
             android:id="@+id/spinnerPrivacy"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="45dp"
             android:background="@drawable/spinner_background"
-            android:layout_marginBottom="40dp"/>
+            android:layout_marginBottom="16dp"/>
 
+        <!-- CATEGORIA -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Categoria"
+            android:textColor="#cccccc"
+            android:layout_marginBottom="4dp"/>
+        <Spinner
+            android:id="@+id/spinnerCategory"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:background="@drawable/spinner_background"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- LATÊNCIA -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Latência (Delay)"
+            android:textColor="#cccccc"
+            android:layout_marginBottom="4dp"/>
+        <Spinner
+            android:id="@+id/spinnerLatency"
+            android:layout_width="match_parent"
+            android:layout_height="45dp"
+            android:background="@drawable/spinner_background"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- CONTEÚDO PARA CRIANÇAS -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Conteúdo para crianças (COPPA)?"
+            android:textColor="#cccccc"
+            android:layout_marginBottom="4dp"/>
+        <RadioGroup
+            android:id="@+id/rgKids"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="24dp">
+            <RadioButton
+                android:id="@+id/rbNotForKids"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Não (Chat Ativo)"
+                android:textColor="#ffffff"
+                android:buttonTint="#FF0000"
+                android:checked="true"
+                android:layout_marginEnd="16dp"/>
+            <RadioButton
+                android:id="@+id/rbForKids"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sim (Sem Chat)"
+                android:textColor="#ffffff"
+                android:buttonTint="#FF0000"/>
+        </RadioGroup>
+
+        <!-- BOTÃO -->
         <Button
             android:id="@+id/btnSignInCreate"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:text="Conectar e Criar Live"
+            android:text="CONECTAR E CRIAR LIVE"
             android:backgroundTint="#FF0000"
             android:textSize="16sp"
-            android:textStyle="bold"
-            android:drawableStart="@android:drawable/ic_dialog_email"
-            android:drawableTint="#FFFFFF"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"/>
+            android:textStyle="bold"/>
 
         <ProgressBar
             android:id="@+id/progressBar"
