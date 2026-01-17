@@ -13,18 +13,12 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.Scope
-// Importando transporte HTTP padrão Java para evitar erro de AndroidHttp
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.youtube.YouTube
-import com.google.api.services.youtube.model.LiveBroadcast
-import com.google.api.services.youtube.model.LiveBroadcastSnippet
-import com.google.api.services.youtube.model.LiveBroadcastStatus
-import com.google.api.services.youtube.model.LiveStream
-import com.google.api.services.youtube.model.LiveStreamCdn
-import com.google.api.services.youtube.model.LiveStreamSnippet
-import com.google.api.services.youtube.model.IngestionInfo
+// IMPORTANTE: Importar todo o pacote model para garantir que LiveStreamCdn seja encontrado
+import com.google.api.services.youtube.model.*
 import com.livestream.youtube.databinding.ActivityGoogleLoginBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -102,7 +96,6 @@ class GoogleLoginActivity : AppCompatActivity() {
         val credential = GoogleAccountCredential.usingOAuth2(this, Collections.singleton(SCOPE_YOUTUBE))
         credential.selectedAccount = account.account
 
-        // CORRIGIDO: Usando NetHttpTransport em vez de AndroidHttp
         val youtubeService = YouTube.Builder(
             NetHttpTransport(),
             GsonFactory.getDefaultInstance(),
@@ -116,33 +109,38 @@ class GoogleLoginActivity : AppCompatActivity() {
             try {
                 withContext(Dispatchers.Main) { updateStatus("1/3: Criando evento...", true) }
                 
-                val broadcast = LiveBroadcast().apply {
-                    kind = "youtube#liveBroadcast"
-                    snippet = LiveBroadcastSnippet().apply { 
-                        this.title = title
-                        scheduledStartTime = com.google.api.client.util.DateTime(System.currentTimeMillis())
-                    }
-                    status = LiveBroadcastStatus().apply { 
-                        privacyStatus = privacy
-                        selfDeclaredMadeForKids = false
-                    }
-                }
+                // Usando setters fluentes (.setX) para evitar erros de compilação Kotlin
+                val broadcastSnippet = LiveBroadcastSnippet()
+                    .setTitle(title)
+                    .setScheduledStartTime(com.google.api.client.util.DateTime(System.currentTimeMillis()))
+
+                val broadcastStatus = LiveBroadcastStatus()
+                    .setPrivacyStatus(privacy)
+                    .setSelfDeclaredMadeForKids(false)
+
+                val broadcast = LiveBroadcast()
+                    .setKind("youtube#liveBroadcast")
+                    .setSnippet(broadcastSnippet)
+                    .setStatus(broadcastStatus)
+
                 val createdBroadcast = youtubeService.liveBroadcasts().insert(listOf("snippet", "status"), broadcast).execute()
 
                 withContext(Dispatchers.Main) { updateStatus("2/3: Gerando chaves...", true) }
                 
-                // CORRIGIDO: Configuração explícita do CDN para evitar erro de tipo genérico
+                // Configuração explícita do CDN usando setters
                 val cdnSettings = LiveStreamCdn()
-                cdnSettings.format = "1080p"
-                cdnSettings.ingestionType = "rtmp"
-                cdnSettings.resolution = "1080p"
-                cdnSettings.frameRate = "60fps"
+                    .setFormat("1080p")
+                    .setIngestionType("rtmp")
+                    .setResolution("1080p")
+                    .setFrameRate("60fps")
 
-                val stream = LiveStream().apply {
-                    kind = "youtube#liveStream"
-                    snippet = LiveStreamSnippet().apply { this.title = "Stream Mobile - $title" }
-                    cdn = cdnSettings
-                }
+                val streamSnippet = LiveStreamSnippet().setTitle("Stream Mobile - $title")
+
+                val stream = LiveStream()
+                    .setKind("youtube#liveStream")
+                    .setSnippet(streamSnippet)
+                    .setCdn(cdnSettings)
+
                 val createdStream = youtubeService.liveStreams().insert(listOf("snippet", "cdn"), stream).execute()
 
                 withContext(Dispatchers.Main) { updateStatus("3/3: Finalizando...", true) }
