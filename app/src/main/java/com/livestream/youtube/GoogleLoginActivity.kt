@@ -17,7 +17,7 @@ import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.youtube.YouTube
-// IMPORTANTE: Importar todo o pacote model
+// Importando todo o pacote model para corrigir erro de referências
 import com.google.api.services.youtube.model.*
 import com.livestream.youtube.databinding.ActivityGoogleLoginBinding
 import kotlinx.coroutines.CoroutineScope
@@ -52,7 +52,7 @@ class GoogleLoginActivity : AppCompatActivity() {
     private fun setupUI() {
         val options = arrayOf("Público", "Não Listado", "Privado")
         binding.spinnerPrivacy.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, options)
-        binding.spinnerPrivacy.setSelection(1)
+        binding.spinnerPrivacy.setSelection(1) // Padrão: Não Listado
 
         binding.btnSignInCreate.setOnClickListener {
             if (binding.etLiveTitle.text.toString().trim().isEmpty()) {
@@ -130,7 +130,7 @@ class GoogleLoginActivity : AppCompatActivity() {
                 // 2. Criar Stream
                 withContext(Dispatchers.Main) { updateStatus("2/3: Gerando chaves...", true) }
                 
-                // CORREÇÃO AQUI: A classe correta é CdnSettings, não LiveStreamCdn
+                // Usando CdnSettings (nome correto da classe)
                 val cdnSettings = CdnSettings()
                     .setFormat("1080p")
                     .setIngestionType("rtmp")
@@ -143,13 +143,13 @@ class GoogleLoginActivity : AppCompatActivity() {
                 val stream = LiveStream()
                     .setKind("youtube#liveStream")
                     .setSnippet(streamSnippet)
-                    .setCdn(cdnSettings) // setCdn espera um objeto CdnSettings
+                    .setCdn(cdnSettings)
 
                 val createdStream = youtubeService.liveStreams()
                     .insert(listOf("snippet", "cdn"), stream)
                     .execute()
 
-                // 3. Bind
+                // 3. Bind (Ligar evento à chave)
                 withContext(Dispatchers.Main) { updateStatus("3/3: Finalizando...", true) }
                 
                 youtubeService.liveBroadcasts()
@@ -157,7 +157,7 @@ class GoogleLoginActivity : AppCompatActivity() {
                     .setStreamId(createdStream.id)
                     .execute()
 
-                // Recuperar dados
+                // Recuperar URL e Chave
                 val ingestionInfo = createdStream.cdn.ingestionInfo
                 val rtmpUrl = ingestionInfo.ingestionAddress
                 val streamKey = ingestionInfo.streamName
@@ -178,14 +178,19 @@ class GoogleLoginActivity : AppCompatActivity() {
     }
 
     private fun saveAndFinish(url: String, key: String) {
+        // 1. Salvar configurações
         getSharedPreferences("stream_settings", Context.MODE_PRIVATE).edit().apply {
             putString("rtmp_url", url)
             putString("stream_key", key)
             apply()
         }
-        Toast.makeText(this, "Live Criada!", Toast.LENGTH_SHORT).show()
+        
+        Toast.makeText(this, "Live Criada! Iniciando...", Toast.LENGTH_LONG).show()
+        
+        // 2. Voltar para MainActivity com ordem de INÍCIO AUTOMÁTICO
         val intent = Intent(this, MainActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+        intent.putExtra("AUTO_START_STREAM", true) // <--- O segredo está aqui
         startActivity(intent)
         finish()
     }
