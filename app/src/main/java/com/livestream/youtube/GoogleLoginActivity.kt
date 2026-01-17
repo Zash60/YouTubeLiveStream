@@ -17,7 +17,6 @@ import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.youtube.YouTube
-// Importando todo o pacote model para corrigir erro de referências
 import com.google.api.services.youtube.model.*
 import com.livestream.youtube.databinding.ActivityGoogleLoginBinding
 import kotlinx.coroutines.CoroutineScope
@@ -118,19 +117,29 @@ class GoogleLoginActivity : AppCompatActivity() {
                     .setPrivacyStatus(privacy)
                     .setSelfDeclaredMadeForKids(false)
 
+                // --- A MÁGICA ESTÁ AQUI: AUTO START ---
+                val monitorStreamInfo = MonitorStreamInfo()
+                monitorStreamInfo.enableMonitorStream = false // Desativa pré-visualização (vai direto)
+
+                val contentDetails = LiveBroadcastContentDetails()
+                contentDetails.monitorStream = monitorStreamInfo
+                contentDetails.enableAutoStart = true // INICIA A LIVE AUTOMATICAMENTE AO RECEBER VÍDEO
+                contentDetails.enableAutoStop = true  // ENCERRA A LIVE QUANDO PARAR DE TRANSMITIR
+
                 val broadcast = LiveBroadcast()
                     .setKind("youtube#liveBroadcast")
                     .setSnippet(broadcastSnippet)
                     .setStatus(broadcastStatus)
+                    .setContentDetails(contentDetails) // Anexa as configurações
 
+                // Incluimos "contentDetails" na lista de partes solicitadas
                 val createdBroadcast = youtubeService.liveBroadcasts()
-                    .insert(listOf("snippet", "status"), broadcast)
+                    .insert(listOf("snippet", "status", "contentDetails"), broadcast)
                     .execute()
 
                 // 2. Criar Stream
                 withContext(Dispatchers.Main) { updateStatus("2/3: Gerando chaves...", true) }
                 
-                // Usando CdnSettings (nome correto da classe)
                 val cdnSettings = CdnSettings()
                     .setFormat("1080p")
                     .setIngestionType("rtmp")
@@ -149,7 +158,7 @@ class GoogleLoginActivity : AppCompatActivity() {
                     .insert(listOf("snippet", "cdn"), stream)
                     .execute()
 
-                // 3. Bind (Ligar evento à chave)
+                // 3. Bind
                 withContext(Dispatchers.Main) { updateStatus("3/3: Finalizando...", true) }
                 
                 youtubeService.liveBroadcasts()
@@ -190,7 +199,7 @@ class GoogleLoginActivity : AppCompatActivity() {
         // 2. Voltar para MainActivity com ordem de INÍCIO AUTOMÁTICO
         val intent = Intent(this, MainActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-        intent.putExtra("AUTO_START_STREAM", true) // <--- O segredo está aqui
+        intent.putExtra("AUTO_START_STREAM", true)
         startActivity(intent)
         finish()
     }
