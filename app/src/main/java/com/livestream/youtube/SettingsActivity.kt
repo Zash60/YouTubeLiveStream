@@ -12,7 +12,6 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
 import android.widget.ArrayAdapter
-import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -66,25 +65,27 @@ class SettingsActivity : AppCompatActivity() {
             Toast.makeText(this, "Imagem removida", Toast.LENGTH_SHORT).show()
         }
 
-        // Spinners
+        // Setup Spinners com Layout Padrão
+        val simpleLayout = android.R.layout.simple_spinner_dropdown_item
+        
         val resolutions = arrayOf("1920x1080", "1280x720", "854x480", "640x360")
-        binding.spinnerResolution.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, resolutions)
+        binding.spinnerResolution.adapter = ArrayAdapter(this, simpleLayout, resolutions)
 
         val fpsOptions = arrayOf("60", "30", "24")
-        binding.spinnerFps.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, fpsOptions)
+        binding.spinnerFps.adapter = ArrayAdapter(this, simpleLayout, fpsOptions)
 
         val videoBitrateOptions = arrayOf("8000", "6000", "4500", "4000", "3000", "2500", "2000", "1500")
-        binding.spinnerVideoBitrate.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, videoBitrateOptions)
+        binding.spinnerVideoBitrate.adapter = ArrayAdapter(this, simpleLayout, videoBitrateOptions)
 
         val audioBitrateOptions = arrayOf("320", "256", "192", "128", "96")
-        binding.spinnerAudioBitrate.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, audioBitrateOptions)
+        binding.spinnerAudioBitrate.adapter = ArrayAdapter(this, simpleLayout, audioBitrateOptions)
 
         val sampleRateOptions = arrayOf("48000", "44100", "22050")
-        binding.spinnerSampleRate.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, sampleRateOptions)
+        binding.spinnerSampleRate.adapter = ArrayAdapter(this, simpleLayout, sampleRateOptions)
 
         // Codec
         val codecs = arrayOf("H.264 (Padrão)", "H.265 (HEVC - Alta Qualidade)")
-        binding.spinnerCodec.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, codecs)
+        binding.spinnerCodec.adapter = ArrayAdapter(this, simpleLayout, codecs)
 
         // Save Button
         binding.btnSave.setOnClickListener {
@@ -96,32 +97,33 @@ class SettingsActivity : AppCompatActivity() {
     private fun loadSettings() {
         val prefs = getSharedPreferences("video_settings", Context.MODE_PRIVATE)
 
+        // Helper para setar seleção do spinner de forma segura
+        fun setSpinnerSelection(spinner: android.widget.Spinner, value: String) {
+            val adapter = spinner.adapter as ArrayAdapter<String>
+            val position = adapter.getPosition(value)
+            spinner.setSelection(position.coerceAtLeast(0))
+        }
+
         // Resolução
         val width = prefs.getInt("width", 1280)
         val height = prefs.getInt("height", 720)
-        val resStr = "${width}x${height}"
-        val resAdapter = binding.spinnerResolution.adapter as ArrayAdapter<String>
-        binding.spinnerResolution.setSelection(resAdapter.getPosition(resStr).coerceAtLeast(0))
+        setSpinnerSelection(binding.spinnerResolution, "${width}x${height}")
 
         // FPS
-        val fps = prefs.getInt("fps", 30).toString()
-        val fpsAdapter = binding.spinnerFps.adapter as ArrayAdapter<String>
-        binding.spinnerFps.setSelection(fpsAdapter.getPosition(fps).coerceAtLeast(0))
+        setSpinnerSelection(binding.spinnerFps, prefs.getInt("fps", 30).toString())
 
         // Bitrates
-        val vBitrate = prefs.getInt("video_bitrate", 4000).toString()
-        val vAdapter = binding.spinnerVideoBitrate.adapter as ArrayAdapter<String>
-        binding.spinnerVideoBitrate.setSelection(vAdapter.getPosition(vBitrate).coerceAtLeast(0))
-
-        val aBitrate = prefs.getInt("audio_bitrate", 128).toString()
-        val aAdapter = binding.spinnerAudioBitrate.adapter as ArrayAdapter<String>
-        binding.spinnerAudioBitrate.setSelection(aAdapter.getPosition(aBitrate).coerceAtLeast(0))
+        setSpinnerSelection(binding.spinnerVideoBitrate, prefs.getInt("video_bitrate", 4000).toString())
+        setSpinnerSelection(binding.spinnerAudioBitrate, prefs.getInt("audio_bitrate", 128).toString())
+        
+        // Sample Rate
+        setSpinnerSelection(binding.spinnerSampleRate, prefs.getInt("sample_rate", 44100).toString())
 
         // Codec
         val useHevc = prefs.getBoolean("use_hevc", false)
         binding.spinnerCodec.setSelection(if(useHevc) 1 else 0)
 
-        // Volumes (0-200 slider mapped to 0.0-2.0 float)
+        // Volumes
         val micVol = (prefs.getFloat("mic_volume", 1.0f) * 100).toInt()
         val intVol = (prefs.getFloat("internal_volume", 1.0f) * 100).toInt()
         binding.seekMicVolume.progress = micVol
