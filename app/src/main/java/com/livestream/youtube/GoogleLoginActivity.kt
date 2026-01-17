@@ -13,7 +13,8 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.Scope
-import com.google.api.client.extensions.android.http.AndroidHttp
+// Importando transporte HTTP padrão Java para evitar erro de AndroidHttp
+import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.youtube.YouTube
@@ -23,6 +24,7 @@ import com.google.api.services.youtube.model.LiveBroadcastStatus
 import com.google.api.services.youtube.model.LiveStream
 import com.google.api.services.youtube.model.LiveStreamCdn
 import com.google.api.services.youtube.model.LiveStreamSnippet
+import com.google.api.services.youtube.model.IngestionInfo
 import com.livestream.youtube.databinding.ActivityGoogleLoginBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -100,8 +102,9 @@ class GoogleLoginActivity : AppCompatActivity() {
         val credential = GoogleAccountCredential.usingOAuth2(this, Collections.singleton(SCOPE_YOUTUBE))
         credential.selectedAccount = account.account
 
+        // CORRIGIDO: Usando NetHttpTransport em vez de AndroidHttp
         val youtubeService = YouTube.Builder(
-            AndroidHttp.newCompatibleTransport(),
+            NetHttpTransport(),
             GsonFactory.getDefaultInstance(),
             credential
         ).setApplicationName("YouTubeLiveStreamApp").build()
@@ -128,15 +131,17 @@ class GoogleLoginActivity : AppCompatActivity() {
 
                 withContext(Dispatchers.Main) { updateStatus("2/3: Gerando chaves...", true) }
                 
+                // CORRIGIDO: Configuração explícita do CDN para evitar erro de tipo genérico
+                val cdnSettings = LiveStreamCdn()
+                cdnSettings.format = "1080p"
+                cdnSettings.ingestionType = "rtmp"
+                cdnSettings.resolution = "1080p"
+                cdnSettings.frameRate = "60fps"
+
                 val stream = LiveStream().apply {
                     kind = "youtube#liveStream"
                     snippet = LiveStreamSnippet().apply { this.title = "Stream Mobile - $title" }
-                    cdn = LiveStreamCdn().apply {
-                        format = "1080p"
-                        ingestionType = "rtmp"
-                        resolution = "1080p"
-                        frameRate = "60fps"
-                    }
+                    cdn = cdnSettings
                 }
                 val createdStream = youtubeService.liveStreams().insert(listOf("snippet", "cdn"), stream).execute()
 
