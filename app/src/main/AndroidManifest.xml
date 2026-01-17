@@ -2,31 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 1. Permissões de Rede e Streaming -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- 2. Permissões de Áudio (Microfone/Interno) -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-
-    <!-- 3. Permissões de Serviço em Segundo Plano (CRÍTICO) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <!-- Necessário para capturar a tela no Android 10+ -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
-    
-    <!-- CORREÇÃO DO CRASH: Permissão obrigatória para Android 14/15 quando usa type="mediaProcessing" -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING" />
-
-    <!-- 4. Permissão de Notificação (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
-    <!-- 5. Permissão para o Widget Flutuante -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-
-    <!-- 6. Permissões para Selecionar Imagem de "Já Volto" -->
-    <!-- Para Android 13+ (API 33+) -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <!-- Para Android 12 e inferiores -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
@@ -39,43 +23,41 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="35">
         
-        <!-- usesCleartextTraffic="true" é essencial para conexões RTMP -->
-
-        <!-- Atividade Principal -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"
             android:windowSoftInputMode="adjustResize">
-            <!-- configChanges: IMPEDE que o app reinicie ao virar a tela -->
-            
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- Atividade de Configurações -->
+        <!-- NOVA ACTIVITY DE LOGIN -->
+        <activity
+            android:name=".GoogleLoginActivity"
+            android:exported="false"
+            android:label="Configurar Live"
+            android:parentActivityName=".MainActivity" />
+
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
             android:label="@string/settings"
             android:parentActivityName=".MainActivity" />
 
-        <!-- Serviço de Streaming (Core) -->
         <service
             android:name=".StreamingService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="mediaProjection|mediaProcessing" />
 
-        <!-- Serviço do Controle Flutuante -->
         <service
             android:name=".FloatingControlService"
             android:enabled="true"
             android:exported="false" />
 
     </application>
-
 </manifest>
