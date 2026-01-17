@@ -17,7 +17,7 @@ import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.youtube.YouTube
-// IMPORTANTE: Importar todo o pacote model para garantir que LiveStreamCdn seja encontrado
+// IMPORTANTE: Importar todo o pacote model
 import com.google.api.services.youtube.model.*
 import com.livestream.youtube.databinding.ActivityGoogleLoginBinding
 import kotlinx.coroutines.CoroutineScope
@@ -107,9 +107,9 @@ class GoogleLoginActivity : AppCompatActivity() {
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                // 1. Criar Broadcast
                 withContext(Dispatchers.Main) { updateStatus("1/3: Criando evento...", true) }
                 
-                // Usando setters fluentes (.setX) para evitar erros de compilação Kotlin
                 val broadcastSnippet = LiveBroadcastSnippet()
                     .setTitle(title)
                     .setScheduledStartTime(com.google.api.client.util.DateTime(System.currentTimeMillis()))
@@ -123,42 +123,55 @@ class GoogleLoginActivity : AppCompatActivity() {
                     .setSnippet(broadcastSnippet)
                     .setStatus(broadcastStatus)
 
-                val createdBroadcast = youtubeService.liveBroadcasts().insert(listOf("snippet", "status"), broadcast).execute()
+                val createdBroadcast = youtubeService.liveBroadcasts()
+                    .insert(listOf("snippet", "status"), broadcast)
+                    .execute()
 
+                // 2. Criar Stream
                 withContext(Dispatchers.Main) { updateStatus("2/3: Gerando chaves...", true) }
                 
-                // Configuração explícita do CDN usando setters
-                val cdnSettings = LiveStreamCdn()
+                // CORREÇÃO AQUI: A classe correta é CdnSettings, não LiveStreamCdn
+                val cdnSettings = CdnSettings()
                     .setFormat("1080p")
                     .setIngestionType("rtmp")
                     .setResolution("1080p")
                     .setFrameRate("60fps")
 
-                val streamSnippet = LiveStreamSnippet().setTitle("Stream Mobile - $title")
+                val streamSnippet = LiveStreamSnippet()
+                    .setTitle("Stream Mobile - $title")
 
                 val stream = LiveStream()
                     .setKind("youtube#liveStream")
                     .setSnippet(streamSnippet)
-                    .setCdn(cdnSettings)
+                    .setCdn(cdnSettings) // setCdn espera um objeto CdnSettings
 
-                val createdStream = youtubeService.liveStreams().insert(listOf("snippet", "cdn"), stream).execute()
+                val createdStream = youtubeService.liveStreams()
+                    .insert(listOf("snippet", "cdn"), stream)
+                    .execute()
 
+                // 3. Bind
                 withContext(Dispatchers.Main) { updateStatus("3/3: Finalizando...", true) }
                 
-                youtubeService.liveBroadcasts().bind(createdBroadcast.id, listOf("id", "contentDetails"))
-                    .setStreamId(createdStream.id).execute()
+                youtubeService.liveBroadcasts()
+                    .bind(createdBroadcast.id, listOf("id", "contentDetails"))
+                    .setStreamId(createdStream.id)
+                    .execute()
 
-                val rtmpUrl = createdStream.cdn.ingestionInfo.ingestionAddress
-                val streamKey = createdStream.cdn.ingestionInfo.streamName
+                // Recuperar dados
+                val ingestionInfo = createdStream.cdn.ingestionInfo
+                val rtmpUrl = ingestionInfo.ingestionAddress
+                val streamKey = ingestionInfo.streamName
 
                 withContext(Dispatchers.Main) { saveAndFinish(rtmpUrl, streamKey) }
 
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    updateStatus("Erro API: ${e.message}", false)
+                    val errorMsg = "Erro API: ${e.message}"
+                    Log.e("API_FAIL", errorMsg, e)
+                    updateStatus(errorMsg, false)
                     binding.progressBar.visibility = View.GONE
                     binding.btnSignInCreate.isEnabled = true
-                    Toast.makeText(this@GoogleLoginActivity, "Erro: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@GoogleLoginActivity, errorMsg, Toast.LENGTH_LONG).show()
                 }
             }
         }
