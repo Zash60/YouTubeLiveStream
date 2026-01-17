@@ -11,20 +11,17 @@
         android:orientation="vertical"
         android:padding="24dp">
 
-        <!-- Logo/Header -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical"
             android:layout_marginBottom="24dp">
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="📺"
                 android:textSize="64sp" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -33,7 +30,6 @@
                 android:textSize="24sp"
                 android:textStyle="bold"
                 android:layout_marginTop="8dp" />
-
             <TextView
                 android:id="@+id/statusText"
                 android:layout_width="wrap_content"
@@ -42,17 +38,14 @@
                 android:textColor="#888888"
                 android:textSize="16sp"
                 android:layout_marginTop="8dp" />
-
         </LinearLayout>
 
-        <!-- RTMP URL -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="URL do servidor RTMP"
             android:textColor="#cccccc"
             android:textSize="14sp" />
-
         <EditText
             android:id="@+id/etRtmpUrl"
             android:layout_width="match_parent"
@@ -66,21 +59,18 @@
             android:layout_marginTop="8dp"
             android:layout_marginBottom="16dp" />
 
-        <!-- Stream Key -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Chave de transmissão"
             android:textColor="#cccccc"
             android:textSize="14sp" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="24dp">
-
             <EditText
                 android:id="@+id/etStreamKey"
                 android:layout_width="0dp"
@@ -92,7 +82,6 @@
                 android:padding="16dp"
                 android:textColor="#ffffff"
                 android:textColorHint="#666666" />
-
             <Button
                 android:id="@+id/btnPasteKey"
                 android:layout_width="wrap_content"
@@ -101,10 +90,8 @@
                 android:textSize="20sp"
                 android:layout_marginStart="8dp"
                 android:backgroundTint="#4a4a6a" />
-
         </LinearLayout>
 
-        <!-- ORIENTAÇÃO DA TELA (NOVO) -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -113,7 +100,6 @@
             android:textSize="16sp"
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
-
         <Spinner
             android:id="@+id/spinnerOrientation"
             android:layout_width="match_parent"
@@ -121,7 +107,16 @@
             android:background="@drawable/spinner_background"
             android:layout_marginBottom="24dp" />
 
-        <!-- Buttons -->
+        <!-- BOTÃO GOOGLE -->
+        <Button
+            android:id="@+id/btnLoginGoogle"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="📡 Criar Live com Google"
+            android:backgroundTint="#4285F4"
+            android:textSize="16sp"
+            android:layout_marginBottom="12dp" />
+
         <Button
             android:id="@+id/btnStartStream"
             android:layout_width="match_parent"
@@ -136,10 +131,9 @@
             android:id="@+id/btnSettings"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:text="⚙️ Configurações de Qualidade"
+            android:text="⚙️ Configurações e Áudio"
             android:textSize="16sp"
             android:backgroundTint="#4a4a6a" />
 
     </LinearLayout>
-
 </ScrollView>
