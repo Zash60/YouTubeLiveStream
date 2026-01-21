@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@android:color/transparent">
+
+    <!-- Menu Expandido -->
+    <LinearLayout
+        android:id="@+id/layout_menu"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@drawable/bg_rounded_menu"
+        android:paddingStart="12dp"
+        android:paddingEnd="60dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:visibility="gone"
+        android:gravity="center_vertical"
+        android:layout_gravity="center_vertical"
+        android:layout_marginEnd="28dp"
+        android:animateLayoutChanges="true">
+
+        <!-- Botão Chat (Show/Hide) - NOVO -->
+        <ImageView
+            android:id="@+id/btn_chat_toggle"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@android:drawable/ic_menu_view"
+            android:layout_marginEnd="16dp"
+            android:padding="6dp"
+            android:contentDescription="Chat"
+            app:tint="#FFFFFF"
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
+
+        <!-- Botão Privacidade -->
+        <ImageView
+            android:id="@+id/btn_privacy"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@android:drawable/ic_menu_camera"
+            android:layout_marginEnd="16dp"
+            android:padding="6dp"
+            android:contentDescription="Privacidade"
+            app:tint="#FFFFFF"
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
+
+        <!-- Botão Mute -->
+        <ImageView
+            android:id="@+id/btn_mute"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@android:drawable/ic_lock_silent_mode_off"
+            android:layout_marginEnd="16dp"
+            android:padding="6dp"
+            android:contentDescription="Mutar"
+            app:tint="#FFFFFF"
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
+
+        <!-- Botão Parar -->
+        <ImageView
+            android:id="@+id/btn_stop"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:padding="6dp"
+            android:contentDescription="Parar Stream"
+            app:tint="#FF4444"
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
+    </LinearLayout>
+
+    <!-- Botão Principal (Bolinha) -->
+    <ImageView
+        android:id="@+id/img_floating_icon"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="center_vertical|end"
+        android:src="@android:drawable/ic_menu_camera"
+        android:background="@drawable/bg_circle_red"
+        android:padding="14dp"
+        android:elevation="8dp"
+        app:tint="#FFFFFF"
+        android:contentDescription="Abrir Menu" />
+
+</FrameLayout>

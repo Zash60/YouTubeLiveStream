@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- 1. ALERTAS (Streamlabs/Elements) -->
+    <WebView
+        android:id="@+id/webViewAlerts"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent" 
+        android:layerType="hardware" />
+
+    <!-- 2. CONTADOR DE VIEWERS (Canto Superior Direito) -->
+    <TextView
+        android:id="@+id/tvViewerCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp"
+        android:background="@drawable/spinner_background"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:text="👁️ Offline"
+        android:textColor="#FF0000"
+        android:textStyle="bold"
+        android:textSize="14sp" />
+
+    <!-- 3. CHAT FLUTUANTE (Canto Inferior Esquerdo) -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvChat"
+        android:layout_width="250dp"
+        android:layout_height="200dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="20dp" 
+        android:layout_marginStart="10dp"/>
+
+</RelativeLayout>
