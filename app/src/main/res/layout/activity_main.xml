@@ -58,8 +58,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/rtmp_url_label"
                     android:textColor="@color/text_secondary"
-                    android:textSize="14sp"
-                    android:textStyle="medium" />
+                    android:textSize="14sp" />
                 <EditText
                     android:id="@+id/etRtmpUrl"
                     android:layout_width="match_parent"
@@ -79,8 +78,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/stream_key_label"
                     android:textColor="@color/text_secondary"
-                    android:textSize="14sp"
-                    android:textStyle="medium" />
+                    android:textSize="14sp" />
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -102,7 +100,7 @@
                         android:layout_width="48dp"
                         android:layout_height="48dp"
                         android:layout_marginStart="8dp"
-                        android:src="@android:drawable/ic_menu_paste"
+                        android:src="@drawable/ic_paste"
                         android:background="@drawable/edit_text_background"
                         android:contentDescription="@string/paste"
                         app:tint="@color/text_secondary" />
@@ -156,7 +154,6 @@
                 android:text="@string/login_google"
                 android:backgroundTint="@color/accent_blue"
                 android:textSize="16sp"
-                android:textStyle="medium"
                 android:layout_marginBottom="12dp"
                 android:elevation="2dp" />
 

@@ -46,7 +46,6 @@
                     android:text="@string/thumbnail_label"
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp"
-                    android:textStyle="medium"
                     android:layout_marginBottom="12dp"/>
 
                 <androidx.cardview.widget.CardView
@@ -96,7 +95,6 @@
                     android:text="@string/title_label"
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp"
-                    android:textStyle="medium"
                     android:layout_marginBottom="8dp"/>
                 <EditText
                     android:id="@+id/etLiveTitle"
@@ -116,7 +114,6 @@
                     android:text="@string/description_label"
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp"
-                    android:textStyle="medium"
                     android:layout_marginBottom="8dp"/>
                 <EditText
                     android:id="@+id/etDescription"
@@ -155,7 +152,6 @@
                     android:text="@string/visibility_label"
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp"
-                    android:textStyle="medium"
                     android:layout_marginBottom="8dp"/>
                 <Spinner
                     android:id="@+id/spinnerPrivacy"
@@ -171,7 +167,6 @@
                     android:text="@string/category_label"
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp"
-                    android:textStyle="medium"
                     android:layout_marginBottom="8dp"/>
                 <Spinner
                     android:id="@+id/spinnerCategory"
@@ -187,7 +182,6 @@
                     android:text="@string/latency_label"
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp"
-                    android:textStyle="medium"
                     android:layout_marginBottom="8dp"/>
                 <Spinner
                     android:id="@+id/spinnerLatency"
@@ -203,7 +197,6 @@
                     android:text="@string/kids_content_label"
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp"
-                    android:textStyle="medium"
                     android:layout_marginBottom="8dp"/>
                 <RadioGroup
                     android:id="@+id/rgKids"
