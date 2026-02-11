@@ -4,7 +4,7 @@
     <string name="app_name">YouTube Live Stream</string>
 
     <!-- General -->
-    <string name="settings">Configurações</string>
+    <string name="settings">Configuracoes</string>
     <string name="offline">Offline</string>
     <string name="online">AO VIVO</string>
     <string name="loading">Aguarde...</string>
@@ -89,12 +89,10 @@
     <string name="live_details">Detalhes da Live</string>
     <string name="connecting_google">Conectando ao Google...</string>
     <string name="login_ok">Login OK! Configurando Live...</string>
-    <string name="login_failed">Falha Login: %1$s</string>
     <string name="creating_event">1/4: Criando evento...</string>
     <string name="uploading_thumbnail">2/4: Enviando capa...</string>
     <string name="generating_keys">3/4: Gerando chaves...</string>
     <string name="finishing">4/4: Finalizando...</string>
-    <string name="api_error">Erro API: %1$s</string>
 
     <!-- Orientation Options -->
     <string name="orientation_auto">Automatico</string>
