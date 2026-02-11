@@ -16,7 +16,6 @@
         
         <!-- Cores de fundo -->
         <item name="android:windowBackground">@color/background</item>
-        <item name="colorBackground">@color/background</item>
         <item name="colorSurface">@color/surface</item>
         <item name="colorSurfaceVariant">@color/surface_variant</item>
         <item name="colorOnSurface">@color/text_primary</item>
@@ -39,10 +38,6 @@
         <!-- Enable edge-to-edge display -->
         <item name="android:enforceNavigationBarContrast">false</item>
         <item name="android:enforceStatusBarContrast">false</item>
-        
-        <!-- Elevation overlay -->
-        <item name="elevationOverlayEnabled">true</item>
-        <item name="elevationOverlayColor">@color/black</item>
         
         <!-- Typography -->
         <item name="textAppearanceHeadlineLarge">@style/TextAppearance.YouTubeLiveStream.HeadlineLarge</item>
