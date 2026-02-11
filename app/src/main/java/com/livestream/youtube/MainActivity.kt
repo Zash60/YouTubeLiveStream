@@ -10,6 +10,9 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.view.View
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,7 +31,7 @@ class MainActivity : AppCompatActivity() {
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             startStreamingService(result.resultCode, result.data!!)
         } else {
-            Toast.makeText(this, "Permissão de captura negada", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.capture_permission, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -41,8 +44,30 @@ class MainActivity : AppCompatActivity() {
 
         setupUI()
         checkPermissions()
-        // Carrega as configurações iniciais
+        // Carrega as configuracoes iniciais
         loadSavedSettings()
+        // Enable full screen immersive mode
+        enableImmersiveMode()
+    }
+
+    private fun enableImmersiveMode() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.setDecorFitsSystemWindows(false)
+            window.insetsController?.let {
+                it.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+                it.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_FULLSCREEN
+            )
+        }
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -52,7 +77,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // 1. Atualiza o status do serviço
+        // 1. Atualiza o status do servico
         isStreaming = StreamingService.isRunning
         updateUI()
         
@@ -62,21 +87,25 @@ class MainActivity : AppCompatActivity() {
         // 3. Verifica se deve iniciar automaticamente (vindo do Google Login)
         if (intent?.getBooleanExtra("AUTO_START_STREAM", false) == true) {
             if (!isStreaming) {
-                // Limpa o flag para não ficar iniciando em loop se girar a tela
+                // Limpa o flag para nao ficar iniciando em loop se girar a tela
                 intent?.removeExtra("AUTO_START_STREAM")
                 
-                // Simula o clique no botão para pedir permissão
+                // Simula o clique no botao para pedir permissao
                 binding.btnStartStream.performClick()
             }
         }
     }
 
     private fun setupUI() {
-        val options = arrayOf("Automático", "Paisagem (Jogos)", "Retrato")
+        val options = arrayOf(
+            getString(R.string.orientation_auto),
+            getString(R.string.orientation_landscape),
+            getString(R.string.orientation_portrait)
+        )
         binding.spinnerOrientation.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, options)
         binding.spinnerOrientation.setSelection(1)
 
-        // Botão Google
+        // Botao Google
         binding.btnLoginGoogle.setOnClickListener {
             startActivity(Intent(this, GoogleLoginActivity::class.java))
         }
@@ -86,7 +115,7 @@ class MainActivity : AppCompatActivity() {
                 if (validateInputs()) {
                     if (checkOverlayPermission()) {
                         saveSettings()
-                        // Aqui pede a permissão de captura de tela
+                        // Aqui pede a permissao de captura de tela
                         screenCaptureRequest.launch(mediaProjectionManager.createScreenCaptureIntent())
                     }
                 }
@@ -132,7 +161,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkOverlayPermission(): Boolean {
         if (Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(this)) {
-            Toast.makeText(this, "Conceda permissão de sobreposição para o widget", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, R.string.overlay_permission, Toast.LENGTH_LONG).show()
             startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
             return false
         }
@@ -142,7 +171,7 @@ class MainActivity : AppCompatActivity() {
     private fun validateInputs(): Boolean {
         val key = binding.etStreamKey.text.toString().trim()
         if (key.isEmpty()) {
-            binding.etStreamKey.error = "Chave vazia"
+            binding.etStreamKey.error = getString(R.string.stream_key_required)
             return false
         }
         return true
@@ -174,16 +203,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateUI() {
         if (isStreaming) {
-            binding.btnStartStream.text = "⏹ Parar Transmissão"
-            binding.btnStartStream.backgroundTintList = ContextCompat.getColorStateList(this, android.R.color.holo_red_dark)
-            binding.statusText.text = "🔴 AO VIVO"
-            binding.statusText.setTextColor(0xFFFF0000.toInt())
+            binding.btnStartStream.text = getString(R.string.stop_stream)
+            binding.btnStartStream.backgroundTintList = ContextCompat.getColorStateList(this, R.color.error)
+            binding.statusText.text = getString(R.string.online)
+            binding.statusText.setTextColor(ContextCompat.getColor(this, R.color.youtube_red))
             binding.btnLoginGoogle.isEnabled = false
         } else {
-            binding.btnStartStream.text = "▶ Iniciar Transmissão"
-            binding.btnStartStream.backgroundTintList = ContextCompat.getColorStateList(this, android.R.color.holo_red_light)
-            binding.statusText.text = "⚫ Offline"
-            binding.statusText.setTextColor(0xFF888888.toInt())
+            binding.btnStartStream.text = getString(R.string.start_stream)
+            binding.btnStartStream.backgroundTintList = ContextCompat.getColorStateList(this, R.color.youtube_red)
+            binding.statusText.text = getString(R.string.offline)
+            binding.statusText.setTextColor(ContextCompat.getColor(this, R.color.text_tertiary))
             binding.btnLoginGoogle.isEnabled = true
         }
     }

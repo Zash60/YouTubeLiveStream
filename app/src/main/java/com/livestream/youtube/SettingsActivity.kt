@@ -11,6 +11,8 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -37,10 +39,31 @@ class SettingsActivity : AppCompatActivity() {
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Configurações"
+        supportActionBar?.title = getString(R.string.settings)
 
         setupUI()
         loadSettings()
+        enableImmersiveMode()
+    }
+
+    private fun enableImmersiveMode() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.setDecorFitsSystemWindows(false)
+            window.insetsController?.let {
+                it.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+                it.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_FULLSCREEN
+            )
+        }
     }
 
     private fun setupUI() {
@@ -60,7 +83,7 @@ class SettingsActivity : AppCompatActivity() {
             val file = File(filesDir, "pause_image.png")
             if (file.exists()) file.delete()
             updateImagePreview(null)
-            Toast.makeText(this, "Imagem removida", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.image_removed, Toast.LENGTH_SHORT).show()
         }
 
         val simpleLayout = android.R.layout.simple_spinner_dropdown_item
@@ -79,7 +102,7 @@ class SettingsActivity : AppCompatActivity() {
         val sampleRateOptions = arrayOf("48000", "44100", "22050")
         binding.spinnerSampleRate.adapter = ArrayAdapter(this, simpleLayout, sampleRateOptions)
 
-        val codecs = arrayOf("H.264 (Padrão)", "H.265 (HEVC - Alta Qualidade)")
+        val codecs = arrayOf("H.264 (Padrao)", "H.265 (HEVC - Alta Qualidade)")
         binding.spinnerCodec.adapter = ArrayAdapter(this, simpleLayout, codecs)
 
         binding.btnSave.setOnClickListener {
@@ -137,7 +160,7 @@ class SettingsActivity : AppCompatActivity() {
             
             apply()
         }
-        Toast.makeText(this, "Salvo!", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, R.string.settings_saved, Toast.LENGTH_SHORT).show()
     }
 
     private fun openGallery() {
@@ -164,7 +187,7 @@ class SettingsActivity : AppCompatActivity() {
             binding.imgPreview.setImageBitmap(bitmap)
             binding.imgPreview.visibility = View.VISIBLE
             binding.btnRemoveImage.visibility = View.VISIBLE
-            binding.txtImageStatus.text = "Imagem Ativa"
+            binding.txtImageStatus.text = getString(R.string.image_active)
         } else {
             val file = File(filesDir, "pause_image.png")
             if (file.exists()) {
@@ -172,11 +195,11 @@ class SettingsActivity : AppCompatActivity() {
                 binding.imgPreview.setImageBitmap(saved)
                 binding.imgPreview.visibility = View.VISIBLE
                 binding.btnRemoveImage.visibility = View.VISIBLE
-                binding.txtImageStatus.text = "Imagem Ativa"
+                binding.txtImageStatus.text = getString(R.string.image_active)
             } else {
                 binding.imgPreview.visibility = View.GONE
                 binding.btnRemoveImage.visibility = View.GONE
-                binding.txtImageStatus.text = "Nenhuma imagem selecionada"
+                binding.txtImageStatus.text = getString(R.string.no_image_selected)
             }
         }
     }

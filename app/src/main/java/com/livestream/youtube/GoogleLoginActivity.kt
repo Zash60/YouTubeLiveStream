@@ -12,6 +12,8 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import android.view.View
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -42,9 +44,7 @@ class GoogleLoginActivity : AppCompatActivity() {
     private var selectedThumbnailUri: Uri? = null
 
     private val categoryIds = arrayOf("20", "24", "22", "28", "27")
-    private val categoryNames = arrayOf("Jogos (Gaming)", "Entretenimento", "Pessoas e Blogs", "Ciência e Tecnologia", "Educação")
     private val latencyValues = arrayOf("normal", "low", "ultraLow")
-    private val latencyNames = arrayOf("Normal (Melhor Qualidade)", "Baixa", "Ultra Baixa (Melhor Interação)")
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -61,7 +61,7 @@ class GoogleLoginActivity : AppCompatActivity() {
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             handleSignInResult(result.data!!)
         } else {
-            updateStatus("Login cancelado", false)
+            updateStatus(getString(R.string.login_cancelled), false)
             binding.progressBar.visibility = View.GONE
             binding.btnSignInCreate.isEnabled = true
         }
@@ -72,16 +72,41 @@ class GoogleLoginActivity : AppCompatActivity() {
         binding = ActivityGoogleLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Detalhes da Live"
+        supportActionBar?.title = getString(R.string.live_details)
         prefs = getSharedPreferences("live_config_prefs", Context.MODE_PRIVATE)
         setupUI()
         loadSavedData()
+        enableImmersiveMode()
+    }
+
+    private fun enableImmersiveMode() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.setDecorFitsSystemWindows(false)
+            window.insetsController?.let {
+                it.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+                it.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_FULLSCREEN
+            )
+        }
     }
 
     private fun setupUI() {
-        binding.spinnerPrivacy.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, arrayOf("Público", "Não Listado", "Privado"))
-        binding.spinnerCategory.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, categoryNames)
-        binding.spinnerLatency.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, latencyNames)
+        binding.spinnerPrivacy.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, 
+            arrayOf(getString(R.string.privacy_public), getString(R.string.privacy_unlisted), getString(R.string.privacy_private)))
+        binding.spinnerCategory.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, 
+            arrayOf(getString(R.string.category_gaming), getString(R.string.category_entertainment), 
+                getString(R.string.category_people), getString(R.string.category_science), getString(R.string.category_education)))
+        binding.spinnerLatency.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, 
+            arrayOf(getString(R.string.latency_normal), getString(R.string.latency_low), getString(R.string.latency_ultra_low)))
 
         binding.btnSelectThumbnail.setOnClickListener {
             val permission = if (Build.VERSION.SDK_INT >= 33) Manifest.permission.READ_MEDIA_IMAGES else Manifest.permission.READ_EXTERNAL_STORAGE
@@ -95,7 +120,7 @@ class GoogleLoginActivity : AppCompatActivity() {
 
         binding.btnSignInCreate.setOnClickListener {
             if (binding.etLiveTitle.text.toString().trim().isEmpty()) {
-                binding.etLiveTitle.error = "Digite um título"
+                binding.etLiveTitle.error = getString(R.string.title_required)
                 return@setOnClickListener
             }
             saveCurrentData()
@@ -128,7 +153,7 @@ class GoogleLoginActivity : AppCompatActivity() {
         binding.progressBar.visibility = View.VISIBLE
         binding.tvStatus.visibility = View.VISIBLE
         binding.btnSignInCreate.isEnabled = false
-        updateStatus("Conectando ao Google...", true)
+        updateStatus(getString(R.string.connecting_google), true)
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestEmail().requestScopes(Scope(SCOPE_YOUTUBE)).build()
         val client = GoogleSignIn.getClient(this, gso)
         signInLauncher.launch(client.signInIntent)
@@ -137,11 +162,11 @@ class GoogleLoginActivity : AppCompatActivity() {
     private fun handleSignInResult(data: Intent) {
         try {
             GoogleSignIn.getSignedInAccountFromIntent(data).getResult(Exception::class.java)
-            updateStatus("Login OK! Configurando Live...", true)
+            updateStatus(getString(R.string.login_ok), true)
             createLiveBroadcast()
         } catch (e: Exception) {
             Log.e("GoogleLogin", "Error", e)
-            updateStatus("Falha Login: ${e.message}", false)
+            updateStatus(getString(R.string.login_failed, e.message), false)
             binding.progressBar.visibility = View.GONE
             binding.btnSignInCreate.isEnabled = true
         }
@@ -161,7 +186,7 @@ class GoogleLoginActivity : AppCompatActivity() {
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                withContext(Dispatchers.Main) { updateStatus("1/4: Criando evento...", true) }
+                withContext(Dispatchers.Main) { updateStatus(getString(R.string.creating_event), true) }
                 
                 val broadcastSnippet = LiveBroadcastSnippet().setTitle(title).setDescription(description).setScheduledStartTime(com.google.api.client.util.DateTime(System.currentTimeMillis()))
                 val broadcastStatus = LiveBroadcastStatus().setPrivacyStatus(privacy).setSelfDeclaredMadeForKids(isMadeForKids)
@@ -180,7 +205,7 @@ class GoogleLoginActivity : AppCompatActivity() {
 
                 if (selectedThumbnailUri != null) {
                     try {
-                        withContext(Dispatchers.Main) { updateStatus("2/4: Enviando capa...", true) }
+                        withContext(Dispatchers.Main) { updateStatus(getString(R.string.uploading_thumbnail), true) }
                         val contentResolver = applicationContext.contentResolver
                         val inputStream = contentResolver.openInputStream(selectedThumbnailUri!!)
                         val type = contentResolver.getType(selectedThumbnailUri!!) ?: "image/jpeg"
@@ -189,14 +214,14 @@ class GoogleLoginActivity : AppCompatActivity() {
                     } catch (e: Exception) { e.printStackTrace() }
                 }
 
-                withContext(Dispatchers.Main) { updateStatus("3/4: Gerando chaves...", true) }
+                withContext(Dispatchers.Main) { updateStatus(getString(R.string.generating_keys), true) }
                 
                 val cdnSettings = CdnSettings().setFormat("1080p").setIngestionType("rtmp").setResolution("1080p").setFrameRate("60fps")
                 val streamSnippet = LiveStreamSnippet().setTitle("Stream Mobile - $title")
                 val stream = LiveStream().setKind("youtube#liveStream").setSnippet(streamSnippet).setCdn(cdnSettings)
                 val createdStream = youtubeService.liveStreams().insert(listOf("snippet", "cdn"), stream).execute()
 
-                withContext(Dispatchers.Main) { updateStatus("4/4: Finalizando...", true) }
+                withContext(Dispatchers.Main) { updateStatus(getString(R.string.finishing), true) }
                 
                 youtubeService.liveBroadcasts().bind(createdBroadcast.id, listOf("id", "contentDetails")).setStreamId(createdStream.id).execute()
                 
@@ -207,10 +232,10 @@ class GoogleLoginActivity : AppCompatActivity() {
 
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    updateStatus("Erro API: ${e.message}", false)
+                    updateStatus(getString(R.string.api_error, e.message), false)
                     binding.progressBar.visibility = View.GONE
                     binding.btnSignInCreate.isEnabled = true
-                    Toast.makeText(this@GoogleLoginActivity, "Erro: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@GoogleLoginActivity, getString(R.string.api_error, e.message), Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -223,7 +248,7 @@ class GoogleLoginActivity : AppCompatActivity() {
             putString("live_chat_id", chatId)
             apply()
         }
-        Toast.makeText(this, "Live Criada! Iniciando...", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, R.string.live_created, Toast.LENGTH_LONG).show()
         val intent = Intent(this, MainActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.putExtra("AUTO_START_STREAM", true)
@@ -233,7 +258,7 @@ class GoogleLoginActivity : AppCompatActivity() {
 
     private fun updateStatus(msg: String, isLoading: Boolean) {
         binding.tvStatus.text = msg
-        binding.tvStatus.setTextColor(if (isLoading) 0xFF888888.toInt() else 0xFFFF0000.toInt())
+        binding.tvStatus.setTextColor(if (isLoading) ContextCompat.getColor(this, R.color.text_secondary) else ContextCompat.getColor(this, R.color.error))
     }
     
     override fun onSupportNavigateUp(): Boolean {
