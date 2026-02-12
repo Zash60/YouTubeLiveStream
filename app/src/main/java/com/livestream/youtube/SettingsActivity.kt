@@ -107,14 +107,14 @@ class SettingsActivity : AppCompatActivity() {
             getString(R.string.recording_quality_medium),
             getString(R.string.recording_quality_low)
         )
-        binding.spinnerRecordingQuality.adapter = ArrayAdapter(this, simpleLayout, recordingQualityOptions)
+        binding.spinnerRecordingQuality.adapter = ArrayAdapter(this, dropdownItemLayout, recordingQualityOptions)
 
         // Recording format options
         val recordingFormatOptions = arrayOf(
             getString(R.string.recording_format_mp4),
             getString(R.string.recording_format_mkv)
         )
-        binding.spinnerRecordingFormat.adapter = ArrayAdapter(this, simpleLayout, recordingFormatOptions)
+        binding.spinnerRecordingFormat.adapter = ArrayAdapter(this, dropdownItemLayout, recordingFormatOptions)
 
         binding.btnSave.setOnClickListener {
             saveSettings()
