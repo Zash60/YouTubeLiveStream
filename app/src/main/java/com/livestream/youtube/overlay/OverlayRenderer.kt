@@ -7,6 +7,7 @@ import android.net.Uri
 import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
+import android.util.AttributeSet
 import android.util.SizeF
 import android.view.View
 import androidx.core.content.ContextCompat
@@ -22,7 +23,11 @@ import java.io.File
  * Renders overlay elements to a canvas.
  * Supports text, image, and timer elements with various styling options.
  */
-open class OverlayRenderer(context: Context) : View(context) {
+open class OverlayRenderer @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : View(context, attrs, defStyleAttr) {
 
     private val elements = mutableListOf<OverlayElement>()
     private var selectedElementId: String? = null
