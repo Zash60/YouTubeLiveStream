@@ -299,4 +299,63 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:max="100"
-                    android:layout_marginBottom="16dp"/>\n\n                <!-- Visible Toggle -->\n                <LinearLayout\n                    android:layout_width="match_parent"\n                    android:layout_height="wrap_content"\n                    android:orientation="horizontal"\n                    android:gravity="center_vertical">\n                    <TextView\n                        android:layout_width="0dp"\n                        android:layout_height="wrap_content"\n                        android:layout_weight="1"\n                        android:text="@string/property_visible"\n                        android:textColor="@color/text_primary"/>\n                    <Switch\n                        android:id="@+id/switchVisible"\n                        android:layout_width="wrap_content"\n                        android:layout_height="wrap_content"/>\n                </LinearLayout>\n\n            </LinearLayout>\n        </ScrollView>\n\n        <!-- Action Buttons -->\n        <LinearLayout\n            android:layout_width="match_parent"\n            android:layout_height="wrap_content"\n            android:orientation="vertical"\n            android:layout_marginTop="16dp">\n\n            <Button\n                android:id="@+id/btnDuplicate"\n                android:layout_width="match_parent"\n                android:layout_height="48dp"\n                android:text="@string/duplicate_element"\n                android:visibility="gone"\n                android:layout_marginBottom="8dp"/>\n\n            <Button\n                android:id="@+id/btnDelete"\n                android:layout_width="match_parent"\n                android:layout_height="48dp"\n                android:text="@string/delete_element"\n                android:visibility="gone"\n                android:backgroundTint="@color/error"\n                android:layout_marginBottom="8dp"/>\n\n            <Button\n                android:id="@+id/btnSave"\n                android:layout_width="match_parent"\n                android:layout_height="56dp"\n                android:text="@string/save_overlay"\n                android:textStyle="bold"\n                android:backgroundTint="@color/success"/>\n\n        </LinearLayout>\n\n    </LinearLayout>\n\n</LinearLayout>\n
+                    android:layout_marginBottom="16dp"/>
+
+                <!-- Visible Toggle -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/property_visible"
+                        android:textColor="@color/text_primary"/>
+                    <Switch
+                        android:id="@+id/switchVisible"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- Action Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="16dp">
+
+            <Button
+                android:id="@+id/btnDuplicate"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="@string/duplicate_element"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp"/>
+
+            <Button
+                android:id="@+id/btnDelete"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="@string/delete_element"
+                android:visibility="gone"
+                android:backgroundTint="@color/error"
+                android:layout_marginBottom="8dp"/>
+
+            <Button
+                android:id="@+id/btnSave"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="@string/save_overlay"
+                android:textStyle="bold"
+                android:backgroundTint="@color/success"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>
