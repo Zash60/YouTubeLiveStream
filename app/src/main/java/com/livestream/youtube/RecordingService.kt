@@ -316,7 +316,9 @@ class RecordingService(private val context: Context) {
                 put(MediaStore.Video.Media.DATA, filePath)
                 
                 // Get dimensions from quality preset
-                val (width, height) = QUALITY_DIMENSIONS[currentQuality] ?: Pair(1280, 720)
+                val dimensions = QUALITY_DIMENSIONS[currentQuality] ?: Resolution(1280, 720)
+                val width = dimensions.width
+                val height = dimensions.height
                 put(MediaStore.Video.Media.WIDTH, width)
                 put(MediaStore.Video.Media.HEIGHT, height)
                 
