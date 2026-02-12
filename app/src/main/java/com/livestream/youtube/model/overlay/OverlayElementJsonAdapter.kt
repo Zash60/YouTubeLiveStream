@@ -26,6 +26,7 @@ class OverlayElementJsonAdapter : JsonSerializer<OverlayElement>, JsonDeserializ
             is TextOverlayElement -> serializeTextElement(src, json)
             is ImageOverlayElement -> serializeImageElement(src, json)
             is TimerOverlayElement -> serializeTimerElement(src, json)
+            is ViewerCountOverlayElement -> serializeViewerCountElement(src, json)
         }
         return json
     }
@@ -42,6 +43,7 @@ class OverlayElementJsonAdapter : JsonSerializer<OverlayElement>, JsonDeserializ
             OverlayElement.TYPE_TEXT -> deserializeTextElement(jsonObject)
             OverlayElement.TYPE_IMAGE -> deserializeImageElement(jsonObject)
             OverlayElement.TYPE_TIMER -> deserializeTimerElement(jsonObject)
+            OverlayElement.TYPE_VIEWER_COUNT -> deserializeViewerCountElement(jsonObject)
             else -> TextOverlayElement()
         }
     }
@@ -108,6 +110,26 @@ class OverlayElementJsonAdapter : JsonSerializer<OverlayElement>, JsonDeserializ
         json.addProperty("hasShadow", element.hasShadow)
         json.addProperty("showLabels", element.showLabels)
         json.addProperty("labelText", element.labelText)
+    }
+
+    private fun serializeViewerCountElement(element: ViewerCountOverlayElement, json: JsonObject) {
+        json.addProperty("id", element.id)
+        json.addProperty("x", element.x)
+        json.addProperty("y", element.y)
+        json.addProperty("width", element.width)
+        json.addProperty("height", element.height)
+        json.addProperty("rotation", element.rotation)
+        json.addProperty("opacity", element.opacity.toDouble())
+        json.addProperty("isVisible", element.isVisible)
+        json.addProperty("zIndex", element.zIndex)
+        json.addProperty("fontFamily", element.fontFamily)
+        json.addProperty("fontSize", element.fontSize)
+        json.addProperty("textColor", element.textColor)
+        json.addProperty("backgroundColor", element.backgroundColor)
+        json.addProperty("hasShadow", element.hasShadow)
+        json.addProperty("showIcon", element.showIcon)
+        json.addProperty("iconType", element.iconType.name)
+        json.addProperty("viewerValue", element.viewerValue)
     }
 
     private fun deserializeTextElement(json: JsonObject): TextOverlayElement {
@@ -201,6 +223,34 @@ class OverlayElementJsonAdapter : JsonSerializer<OverlayElement>, JsonDeserializ
             hasShadow = json.get("hasShadow")?.asBoolean ?: true,
             showLabels = json.get("showLabels")?.asBoolean ?: false,
             labelText = json.get("labelText")?.asString ?: "LIVE"
+        )
+    }
+
+    private fun deserializeViewerCountElement(json: JsonObject): ViewerCountOverlayElement {
+        return ViewerCountOverlayElement(
+            id = json.get("id")?.asString ?: java.util.UUID.randomUUID().toString(),
+            x = json.get("x")?.asFloat ?: 0.85f,
+            y = json.get("y")?.asFloat ?: 0.02f,
+            width = json.get("width")?.asFloat ?: 0.14f,
+            height = json.get("height")?.asFloat ?: 0.05f,
+            rotation = json.get("rotation")?.asFloat ?: 0f,
+            opacity = json.get("opacity")?.asFloat ?: 1f,
+            isVisible = json.get("isVisible")?.asBoolean ?: true,
+            zIndex = json.get("zIndex")?.asInt ?: 0,
+            fontFamily = json.get("fontFamily")?.asString ?: "monospace",
+            fontSize = json.get("fontSize")?.asInt ?: 24,
+            textColor = json.get("textColor")?.asInt ?: android.graphics.Color.WHITE,
+            backgroundColor = json.get("backgroundColor")?.asInt ?: android.graphics.Color.TRANSPARENT,
+            hasShadow = json.get("hasShadow")?.asBoolean ?: true,
+            showIcon = json.get("showIcon")?.asBoolean ?: true,
+            iconType = try {
+                ViewerCountOverlayElement.IconType.valueOf(
+                    json.get("iconType")?.asString ?: "EYE"
+                )
+            } catch (e: Exception) {
+                ViewerCountOverlayElement.IconType.EYE
+            },
+            viewerValue = json.get("viewerValue")?.asString ?: "0"
         )
     }
 }

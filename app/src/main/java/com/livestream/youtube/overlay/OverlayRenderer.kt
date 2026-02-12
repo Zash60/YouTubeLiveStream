@@ -95,6 +95,7 @@ class OverlayRenderer(context: Context) : View(context) {
                 is TextOverlayElement -> drawTextElement(canvas, element)
                 is ImageOverlayElement -> drawImageElement(canvas, element)
                 is TimerOverlayElement -> drawTimerElement(canvas, element)
+                is ViewerCountOverlayElement -> drawViewerCountElement(canvas, element)
             }
 
             // Draw selection overlay in edit mode
@@ -230,6 +231,40 @@ class OverlayRenderer(context: Context) : View(context) {
         val x = bounds.left + (bounds.width() - textPaint.measureText(timeText)) / 2
         val y = bounds.bottom - textPaint.descent()
         canvas.drawText(timeText, x, y, textPaint)
+        canvas.restore()
+
+        textPaint.clearShadowLayer()
+    }
+
+    private fun drawViewerCountElement(canvas: Canvas, element: ViewerCountOverlayElement) {
+        val bounds = getElementBounds(element)
+
+        // Draw background if set
+        if (element.backgroundColor != Color.TRANSPARENT) {
+            backgroundPaint.color = element.backgroundColor
+            canvas.drawRoundRect(bounds, 8f, 8f, backgroundPaint)
+        }
+
+        // Setup text paint
+        textPaint.color = element.textColor
+        textPaint.textSize = element.fontSize * resources.displayMetrics.density
+        textPaint.typeface = Typeface.MONOSPACE
+
+        // Draw shadow if enabled
+        if (element.hasShadow) {
+            textPaint.setShadowLayer(4f, 2f, 2f, Color.BLACK)
+        }
+
+        // Format text with icon
+        val iconText = if (element.showIcon) element.iconType.emoji else ""
+        val countText = element.viewerValue
+        val fullText = "$iconText $countText"
+
+        canvas.save()
+        canvas.rotate(element.rotation, bounds.centerX(), bounds.centerY())
+        val x = bounds.left + (bounds.width() - textPaint.measureText(fullText)) / 2
+        val y = bounds.bottom - textPaint.descent()
+        canvas.drawText(fullText, x, y, textPaint)
         canvas.restore()
 
         textPaint.clearShadowLayer()

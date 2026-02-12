@@ -45,7 +45,8 @@ class FloatingControlService : Service() {
     private var overlayView: View? = null
     private var overlayParams: WindowManager.LayoutParams? = null
     private var rvChat: RecyclerView? = null
-    private var tvViewerCount: TextView? = null
+    private var overlayRenderer: OverlayRenderer? = null
+    private var overlayManager: OverlayElementManager? = null
     private var chatAdapter: ChatAdapter? = null
     
     // DADOS
@@ -119,11 +120,52 @@ class FloatingControlService : Service() {
         chatAdapter = ChatAdapter()
         rvChat?.layoutManager = LinearLayoutManager(this).apply { stackFromEnd = true }
         rvChat?.adapter = chatAdapter
-        
-        // Viewer Count
-        tvViewerCount = overlayView!!.findViewById(R.id.tvViewerCount)
+
+        // Setup Overlay Renderer with Viewer Count
+        setupOverlayRenderer()
 
         try { windowManager.addView(overlayView, overlayParams) } catch (e: Exception) {}
+    }
+
+    private fun setupOverlayRenderer() {
+        overlayManager = OverlayElementManager()
+
+        // Load overlay configuration from storage
+        val storageManager = OverlayStorageManager(this)
+        val savedConfig = storageManager.loadConfiguration()
+
+        if (savedConfig.elements.isEmpty()) {
+            // Add default viewer count element
+            overlayManager?.addElement(ViewerCountOverlayElement.createDefault())
+        } else {
+            overlayManager?.setConfiguration(savedConfig, saveUndo = false)
+        }
+
+        // Get or create container view for renderer
+        val containerView = overlayView?.findViewById<ViewGroup>(R.id.overlayContainer)
+            ?: overlayView as ViewGroup
+
+        overlayRenderer = OverlayRenderer(this).apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        }
+
+        containerView.addView(overlayRenderer, 0)
+        updateOverlayRenderer()
+    }
+
+    private fun updateOverlayRenderer() {
+        overlayRenderer?.setElements(overlayManager?.getVisibleElements() ?: emptyList())
+    }
+
+    private fun updateViewerCount(count: String) {
+        // Update viewer count value in all ViewerCountOverlayElements
+        overlayManager?.getAllElements()?.filterIsInstance<ViewerCountOverlayElement>()?.forEach { element ->
+            overlayManager?.updateElement(element.id) { it.copy(viewerValue = count) }
+        }
+        overlayRenderer?.invalidate()
     }
 
     private fun setupControlView() {
@@ -158,7 +200,7 @@ class FloatingControlService : Service() {
                             .setBroadcastStatus("active").execute()
                         if (broadcastList.items.isNotEmpty()) {
                             val v = broadcastList.items[0].statistics.concurrentViewers ?: "0"
-                            withContext(Dispatchers.Main) { tvViewerCount?.text = "👁️ $v" }
+                            withContext(Dispatchers.Main) { updateViewerCount("👁️ $v") }
                         }
 
                         // Chat
