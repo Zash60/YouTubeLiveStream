@@ -3,7 +3,6 @@ package com.livestream.youtube
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.SurfaceTexture
-import android.graphics.Size
 import android.media.MediaRecorder
 import android.media.MediaScannerConnection
 import android.os.Build
@@ -14,6 +13,11 @@ import android.view.Surface
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+
+/**
+ * Simple data class for resolution dimensions
+ */
+data class Resolution(val width: Int, val height: Int)
 
 /**
  * RecordingService handles local video recording during live streams.
@@ -35,9 +39,9 @@ class RecordingService(private val context: Context) {
         
         // Video dimensions
         private val QUALITY_DIMENSIONS = mapOf(
-            QUALITY_HIGH to Size(1920, 1080),
-            QUALITY_MEDIUM to Size(1280, 720),
-            QUALITY_LOW to Size(854, 480)
+            QUALITY_HIGH to Resolution(1920, 1080),
+            QUALITY_MEDIUM to Resolution(1280, 720),
+            QUALITY_LOW to Resolution(854, 480)
         )
         
         // Bitrates
@@ -115,7 +119,7 @@ class RecordingService(private val context: Context) {
         }
         
         try {
-            val dimensions = QUALITY_DIMENSIONS[currentQuality] ?: Size(1280, 720)
+            val dimensions = QUALITY_DIMENSIONS[currentQuality] ?: Resolution(1280, 720)
             val width = dimensions.width
             val height = dimensions.height
             val bitrate = QUALITY_BITRATES[currentQuality] ?: 4_000_000
@@ -351,7 +355,7 @@ class RecordingService(private val context: Context) {
             quality = currentQuality,
             format = currentFormat,
             bitrate = QUALITY_BITRATES[currentQuality] ?: 0,
-            resolution = QUALITY_DIMENSIONS[currentQuality] ?: Size(0, 0)
+            resolution = QUALITY_DIMENSIONS[currentQuality] ?: Resolution(0, 0)
         )
     }
     
@@ -362,7 +366,7 @@ class RecordingService(private val context: Context) {
         val quality: Int,
         val format: Int,
         val bitrate: Int,
-        val resolution: Size
+        val resolution: Resolution
     ) {
         fun getFormattedDuration(): String {
             val seconds = (durationMs / 1000) % 60
