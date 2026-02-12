@@ -50,7 +50,7 @@ open class OverlayRenderer @JvmOverloads constructor(
     }
 
     private val imageCache = mutableMapOf<String, Bitmap>()
-    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private val scope: CoroutineScope by lazy { CoroutineScope(Dispatchers.Main + SupervisorJob()) }
     private var pendingImages = mutableSetOf<String>()
 
     /**
