@@ -714,7 +714,7 @@ class OverlayEditorActivity : AppCompatActivity(), OverlayCanvasView.OnElementIn
     }
 
     // Element List Adapter
-    inner class ElementListAdapter(
+    class ElementListAdapter(
         private var elements: List<OverlayElement>,
         private val onElementClick: (OverlayElement) -> Unit,
         private val onVisibilityToggle: (OverlayElement) -> Unit
