@@ -11,14 +11,15 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
-import android.view.WindowInsets
-import android.view.WindowInsetsController
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.livestream.youtube.databinding.ActivitySettingsBinding
 import java.io.File
 import java.io.FileOutputStream
@@ -47,23 +48,16 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun enableImmersiveMode() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.setDecorFitsSystemWindows(false)
-            window.insetsController?.let {
-                it.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
-                it.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            }
-        } else {
-            @Suppress("DEPRECATION")
-            window.decorView.systemUiVisibility = (
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_FULLSCREEN
-            )
-        }
+        // Enable edge-to-edge display
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        
+        val windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
+        windowInsetsController.isAppearanceLightStatusBars = false
+        windowInsetsController.isAppearanceLightNavigationBars = false
+        
+        // Hide system bars
+        windowInsetsController.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+        windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
     }
 
     private fun setupUI() {
@@ -105,6 +99,21 @@ class SettingsActivity : AppCompatActivity() {
         val codecs = arrayOf("H.264 (Padrao)", "H.265 (HEVC - Alta Qualidade)")
         binding.spinnerCodec.adapter = ArrayAdapter(this, simpleLayout, codecs)
 
+        // Recording quality options
+        val recordingQualityOptions = arrayOf(
+            getString(R.string.recording_quality_high),
+            getString(R.string.recording_quality_medium),
+            getString(R.string.recording_quality_low)
+        )
+        binding.spinnerRecordingQuality.adapter = ArrayAdapter(this, simpleLayout, recordingQualityOptions)
+
+        // Recording format options
+        val recordingFormatOptions = arrayOf(
+            getString(R.string.recording_format_mp4),
+            getString(R.string.recording_format_mkv)
+        )
+        binding.spinnerRecordingFormat.adapter = ArrayAdapter(this, simpleLayout, recordingFormatOptions)
+
         binding.btnSave.setOnClickListener {
             saveSettings()
             finish()
@@ -135,6 +144,13 @@ class SettingsActivity : AppCompatActivity() {
         // Novos campos
         binding.etWebOverlayUrl.setText(prefs.getString("alert_url", ""))
         binding.switchLocalRecord.isChecked = prefs.getBoolean("local_record", false)
+        
+        // Recording settings
+        val recordingQuality = prefs.getInt("recording_quality", RecordingService.QUALITY_MEDIUM)
+        binding.spinnerRecordingQuality.setSelection(recordingQuality)
+        
+        val recordingFormat = prefs.getInt("recording_format", RecordingService.FORMAT_MP4)
+        binding.spinnerRecordingFormat.setSelection(recordingFormat)
 
         updateImagePreview()
     }
@@ -157,6 +173,10 @@ class SettingsActivity : AppCompatActivity() {
             // Novos campos
             putString("alert_url", binding.etWebOverlayUrl.text.toString())
             putBoolean("local_record", binding.switchLocalRecord.isChecked)
+            
+            // Recording settings
+            putInt("recording_quality", binding.spinnerRecordingQuality.selectedItemPosition)
+            putInt("recording_format", binding.spinnerRecordingFormat.selectedItemPosition)
             
             apply()
         }

@@ -55,7 +55,12 @@ class StreamingService : Service() {
         when (intent?.action) {
             ACTION_START -> {
                 resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
-                data = if (Build.VERSION.SDK_INT >= 33) intent.getParcelableExtra(EXTRA_DATA, Intent::class.java) else intent.getParcelableExtra(EXTRA_DATA)
+                data = if (Build.VERSION.SDK_INT >= 33) {
+                    intent.getParcelableExtra(EXTRA_DATA, Intent::class.java)
+                } else {
+                    @Suppress("DEPRECATION")
+                    intent.getParcelableExtra(EXTRA_DATA)
+                }
                 orientationMode = intent.getStringExtra("orientation_mode") ?: "AUTO"
                 
                 startForeground(NOTIFICATION_ID, createNotification())
@@ -115,6 +120,8 @@ class StreamingService : Service() {
         
         val useHevc = vPrefs.getBoolean("use_hevc", false)
         val localRecord = vPrefs.getBoolean("local_record", false)
+        val recordingQuality = vPrefs.getInt("recording_quality", RecordingService.QUALITY_MEDIUM)
+        val recordingFormat = vPrefs.getInt("recording_format", RecordingService.FORMAT_MP4)
 
         val sysOri = resources.configuration.orientation
         if (orientationMode == "LANDSCAPE" || (orientationMode == "AUTO" && sysOri == Configuration.ORIENTATION_LANDSCAPE)) {
@@ -141,7 +148,8 @@ class StreamingService : Service() {
                 // GRAVAÇÃO LOCAL
                 if (localRecord) {
                     try {
-                        val file = File(getExternalFilesDir(null), "rec_${System.currentTimeMillis()}.mp4")
+                        val format = if (recordingFormat == RecordingService.FORMAT_MP4) "mp4" else "mkv"
+                        val file = File(getExternalFilesDir(null), "rec_${System.currentTimeMillis()}.$format")
                         display.startRecord(file.absolutePath)
                         showToast("Gravando: ${file.name}")
                     } catch (e: Exception) { showToast("Erro gravação: ${e.message}") }

@@ -81,6 +81,71 @@
                         android:trackTint="@color/text_disabled"/>
                 </LinearLayout>
 
+                <!-- Gravacao Local -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:background="@drawable/edit_text_background"
+                    android:padding="16dp"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp">
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/local_record_label"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/local_record_desc"
+                            android:textColor="@color/text_tertiary"
+                            android:textSize="13sp"/>
+                    </LinearLayout>
+                    <Switch
+                        android:id="@+id/switchLocalRecord"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:thumbTint="@color/youtube_red"
+                        android:trackTint="@color/text_disabled"/>
+                </LinearLayout>
+
+                <!-- Qualidade da Gravacao -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/recording_quality_label"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="8dp"/>
+                <Spinner
+                    android:id="@+id/spinnerRecordingQuality"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="@drawable/spinner_background"
+                    android:layout_marginBottom="16dp"/>
+
+                <!-- Formato da Gravacao -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/recording_format_label"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="8dp"/>
+                <Spinner
+                    android:id="@+id/spinnerRecordingFormat"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="@drawable/spinner_background"
+                    android:layout_marginBottom="16dp"/>
+
                 <!-- URL de Alertas -->
                 <TextView
                     android:layout_width="wrap_content"

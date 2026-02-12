@@ -35,6 +35,30 @@
                 android:text="@string/offline"
                 android:textColor="@color/text_tertiary"
                 android:textSize="16sp" />
+
+            <!-- Recording Status Indicator -->
+            <LinearLayout
+                android:id="@+id/recordingStatusLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="8dp"
+                android:visibility="gone">
+                <View
+                    android:id="@+id/recordingDot"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:background="@drawable/bg_circle_red"
+                    android:layout_marginEnd="6dp" />
+                <TextView
+                    android:id="@+id/recordingStatusText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/recording_started"
+                    android:textColor="@color/error"
+                    android:textSize="12sp" />
+            </LinearLayout>
         </LinearLayout>
 
         <!-- Card para configuracoes RTMP -->

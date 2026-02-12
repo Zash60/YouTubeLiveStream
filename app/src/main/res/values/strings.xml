@@ -115,4 +115,19 @@
     <string name="latency_normal">Normal (Melhor Qualidade)</string>
     <string name="latency_low">Baixa</string>
     <string name="latency_ultra_low">Ultra Baixa (Melhor Interacao)</string>
+
+    <!-- Recording Quality Options -->
+    <string name="recording_quality_label">Qualidade da Gravacao</string>
+    <string name="recording_quality_high">Alta (1080p)</string>
+    <string name="recording_quality_medium">Media (720p)</string>
+    <string name="recording_quality_low">Baixa (480p)</string>
+    <string name="recording_format_label">Formato de Gravacao</string>
+    <string name="recording_format_mp4">MP4</string>
+    <string name="recording_format_mkv">MKV</string>
+
+    <!-- Recording Status -->
+    <string name="recording_started">Gravacao iniciada</string>
+    <string name="recording_stopped">Gravacao parada</string>
+    <string name="recording_error">Erro na gravacao</string>
+    <string name="recording_saved">Video salvo: %1$s</string>
 </resources>

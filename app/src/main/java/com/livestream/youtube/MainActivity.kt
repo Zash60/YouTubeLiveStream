@@ -11,7 +11,6 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
-import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.widget.ArrayAdapter
 import android.widget.Toast
@@ -19,6 +18,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.livestream.youtube.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -51,23 +53,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun enableImmersiveMode() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.setDecorFitsSystemWindows(false)
-            window.insetsController?.let {
-                it.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
-                it.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            }
-        } else {
-            @Suppress("DEPRECATION")
-            window.decorView.systemUiVisibility = (
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_FULLSCREEN
-            )
-        }
+        // Enable edge-to-edge display
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        
+        val windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
+        windowInsetsController.isAppearanceLightStatusBars = false
+        windowInsetsController.isAppearanceLightNavigationBars = false
+        
+        // Hide system bars
+        windowInsetsController.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+        windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -208,12 +203,24 @@ class MainActivity : AppCompatActivity() {
             binding.statusText.text = getString(R.string.online)
             binding.statusText.setTextColor(ContextCompat.getColor(this, R.color.youtube_red))
             binding.btnLoginGoogle.isEnabled = false
+            
+            // Check if recording is enabled
+            val prefs = getSharedPreferences("video_settings", Context.MODE_PRIVATE)
+            isRecording = prefs.getBoolean("local_record", false)
+            
+            if (isRecording) {
+                binding.recordingStatusLayout.visibility = View.VISIBLE
+                binding.recordingStatusText.text = getString(R.string.recording_started)
+            } else {
+                binding.recordingStatusLayout.visibility = View.GONE
+            }
         } else {
             binding.btnStartStream.text = getString(R.string.start_stream)
             binding.btnStartStream.backgroundTintList = ContextCompat.getColorStateList(this, R.color.youtube_red)
             binding.statusText.text = getString(R.string.offline)
             binding.statusText.setTextColor(ContextCompat.getColor(this, R.color.text_tertiary))
             binding.btnLoginGoogle.isEnabled = true
+            binding.recordingStatusLayout.visibility = View.GONE
         }
     }
 }
