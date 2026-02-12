@@ -75,7 +75,14 @@ class OverlayElementManager {
      * Moves an element to a new position.
      */
     fun moveElement(elementId: String, newX: Float, newY: Float, saveUndo: Boolean = true): Boolean {
-        return updateElement(elementId, { it.copy(x = newX, y = newY) }, saveUndo)
+        val element = configuration.findElementById(elementId) ?: return false
+        if (saveUndo) {
+            pushUndoState()
+        }
+        element.x = newX
+        element.y = newY
+        configuration = configuration.withUpdatedElement(element)
+        return true
     }
 
     /**
@@ -87,30 +94,55 @@ class OverlayElementManager {
         newHeight: Float,
         saveUndo: Boolean = true
     ): Boolean {
-        return updateElement(elementId, { it.copy(width = newWidth, height = newHeight) }, saveUndo)
+        val element = configuration.findElementById(elementId) ?: return false
+        if (saveUndo) {
+            pushUndoState()
+        }
+        element.width = newWidth
+        element.height = newHeight
+        configuration = configuration.withUpdatedElement(element)
+        return true
     }
 
     /**
      * Sets element visibility.
      */
     fun setElementVisibility(elementId: String, visible: Boolean, saveUndo: Boolean = true): Boolean {
-        return updateElement(elementId, { it.copy(isVisible = visible) }, saveUndo)
+        val element = configuration.findElementById(elementId) ?: return false
+        if (saveUndo) {
+            pushUndoState()
+        }
+        element.isVisible = visible
+        configuration = configuration.withUpdatedElement(element)
+        return true
     }
 
     /**
      * Brings element to front (highest z-index).
      */
     fun bringToFront(elementId: String, saveUndo: Boolean = true): Boolean {
+        val element = configuration.findElementById(elementId) ?: return false
+        if (saveUndo) {
+            pushUndoState()
+        }
         val maxZ = configuration.elements.maxOfOrNull { it.zIndex } ?: 0
-        return updateElement(elementId, { it.copy(zIndex = maxZ + 1) }, saveUndo)
+        element.zIndex = maxZ + 1
+        configuration = configuration.withUpdatedElement(element)
+        return true
     }
 
     /**
      * Sends element to back (lowest z-index).
      */
     fun sendToBack(elementId: String, saveUndo: Boolean = true): Boolean {
+        val element = configuration.findElementById(elementId) ?: return false
+        if (saveUndo) {
+            pushUndoState()
+        }
         val minZ = configuration.elements.minOfOrNull { it.zIndex } ?: 0
-        return updateElement(elementId, { it.copy(zIndex = minZ - 1) }, saveUndo)
+        element.zIndex = minZ - 1
+        configuration = configuration.withUpdatedElement(element)
+        return true
     }
 
     /**

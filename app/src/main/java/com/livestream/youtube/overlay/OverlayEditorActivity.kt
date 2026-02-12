@@ -259,7 +259,8 @@ class OverlayEditorActivity : AppCompatActivity(), OverlayCanvasView.OnElementIn
         binding.seekbarOpacity.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser && selectedElement != null) {
-                    elementManager.updateElement(selectedElement!!.id) { it.copy(opacity = progress / 100f) }
+                    selectedElement!!.opacity = progress / 100f
+                    elementManager.updateElement(selectedElement!!.id) { it }
                     updateCanvas()
                 }
             }

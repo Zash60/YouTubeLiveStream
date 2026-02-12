@@ -77,7 +77,8 @@ class OverlayStreamIntegration(private val context: Context) {
         }
 
         // Try to get surface from streaming service
-        streamingService?.getCaptureSurface()?.let { surface ->
+        val surface = streamingService?.getCaptureSurface()
+        if (surface != null) {
             overlaySurface = surface
             listener?.onSurfaceReady(surface)
             return surface

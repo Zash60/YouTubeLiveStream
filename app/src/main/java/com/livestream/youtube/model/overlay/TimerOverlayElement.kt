@@ -67,7 +67,7 @@ data class TimerOverlayElement(
         MM_SS("MM:SS", "Minutes:Seconds"),
         HH_MM("HH:MM", "Hours:Minutes"),
         SS("SS", "Seconds Only"),
-        CUSTOM("%1$tH:%1$tM:%1$tS", "Custom Format")
+        CUSTOM("%1\$tH:%1\$tM:%1\$tS", "Custom Format")
     }
 
     enum class TimerDirection {
