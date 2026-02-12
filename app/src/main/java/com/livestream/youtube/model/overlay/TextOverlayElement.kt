@@ -7,6 +7,15 @@ import java.util.UUID
  * Text overlay element with customizable font, color, and styling.
  */
 data class TextOverlayElement(
+    val id: String = UUID.randomUUID().toString(),
+    var x: Float = 0.1f,
+    var y: Float = 0.1f,
+    var width: Float = 0.2f,
+    var height: Float = 0.1f,
+    var rotation: Float = 0f,
+    var opacity: Float = 1f,
+    var isVisible: Boolean = true,
+    var zIndex: Int = 0,
     var text: String = "Sample Text",
     var fontFamily: String = "sans-serif-medium",
     var fontSize: Int = 24,
@@ -20,37 +29,20 @@ data class TextOverlayElement(
     var isBold: Boolean = false,
     var isItalic: Boolean = false,
     var alignment: TextAlignment = TextAlignment.LEFT
-) : OverlayElement() {
+) : OverlayElement(
+    id = id,
+    x = x,
+    y = y,
+    width = width,
+    height = height,
+    rotation = rotation,
+    opacity = opacity,
+    isVisible = isVisible,
+    zIndex = zIndex
+) {
 
     override val type: String
         get() = TYPE_TEXT
-
-    override fun copy(): TextOverlayElement {
-        return TextOverlayElement(
-            id = id,
-            x = x,
-            y = y,
-            width = width,
-            height = height,
-            rotation = rotation,
-            opacity = opacity,
-            isVisible = isVisible,
-            zIndex = zIndex,
-            text = text,
-            fontFamily = fontFamily,
-            fontSize = fontSize,
-            textColor = textColor,
-            backgroundColor = backgroundColor,
-            hasShadow = hasShadow,
-            shadowColor = shadowColor,
-            shadowRadius = shadowRadius,
-            shadowDx = shadowDx,
-            shadowDy = shadowDy,
-            isBold = isBold,
-            isItalic = isItalic,
-            alignment = alignment
-        )
-    }
 
     enum class TextAlignment {
         LEFT, CENTER, RIGHT

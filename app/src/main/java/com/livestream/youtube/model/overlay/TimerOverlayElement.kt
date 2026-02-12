@@ -7,6 +7,15 @@ import java.util.UUID
  * Timer overlay element with customizable format and styling.
  */
 data class TimerOverlayElement(
+    val id: String = UUID.randomUUID().toString(),
+    var x: Float = 0.1f,
+    var y: Float = 0.1f,
+    var width: Float = 0.2f,
+    var height: Float = 0.1f,
+    var rotation: Float = 0f,
+    var opacity: Float = 1f,
+    var isVisible: Boolean = true,
+    var zIndex: Int = 0,
     var format: TimerFormat = TimerFormat.HH_MM_SS,
     var direction: TimerDirection = TimerDirection.UP,
     var startTime: Long = System.currentTimeMillis(),
@@ -17,34 +26,20 @@ data class TimerOverlayElement(
     var hasShadow: Boolean = true,
     var showLabels: Boolean = false,
     var labelText: String = "LIVE"
-) : OverlayElement() {
+) : OverlayElement(
+    id = id,
+    x = x,
+    y = y,
+    width = width,
+    height = height,
+    rotation = rotation,
+    opacity = opacity,
+    isVisible = isVisible,
+    zIndex = zIndex
+) {
 
     override val type: String
         get() = TYPE_TIMER
-
-    override fun copy(): TimerOverlayElement {
-        return TimerOverlayElement(
-            id = id,
-            x = x,
-            y = y,
-            width = width,
-            height = height,
-            rotation = rotation,
-            opacity = opacity,
-            isVisible = isVisible,
-            zIndex = zIndex,
-            format = format,
-            direction = direction,
-            startTime = startTime,
-            fontFamily = fontFamily,
-            fontSize = fontSize,
-            textColor = textColor,
-            backgroundColor = backgroundColor,
-            hasShadow = hasShadow,
-            showLabels = showLabels,
-            labelText = labelText
-        )
-    }
 
     enum class TimerFormat(val pattern: String, val displayName: String) {
         HH_MM_SS("HH:MM:SS", "Hours:Minutes:Seconds"),

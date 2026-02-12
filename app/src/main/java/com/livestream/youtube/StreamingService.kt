@@ -15,6 +15,9 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
+import android.graphics.Surface
+import android.graphics.SurfaceTexture
+import android.view.Surface
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.pedro.library.rtmp.RtmpDisplay
@@ -35,6 +38,25 @@ class StreamingService : Service() {
     private var targetVideoBitrate = 4000 * 1000
     private var pauseBitmap: Bitmap? = null
     private var imageFilter: ImageObjectFilterRender? = null
+
+    /**
+     * Binder for clients to access service methods.
+     */
+    inner class StreamingBinder : android.os.Binder() {
+        fun getService(): StreamingService = this@StreamingService
+    }
+
+    /**
+     * Gets the capture surface for overlays.
+     */
+    fun getCaptureSurface(): Surface? {
+        return rtmpDisplay?.glInterface?.surface
+    }
+
+    /**
+     * Checks if currently streaming.
+     */
+    fun isStreaming(): Boolean = isRunning
 
     override fun onCreate() {
         super.onCreate()
@@ -205,7 +227,7 @@ class StreamingService : Service() {
             .build()
     }
 
-    override fun onBind(intent: Intent?): IBinder? = null
+    override fun onBind(intent: Intent?): IBinder? = StreamingBinder()
     override fun onDestroy() { stopStreaming(); super.onDestroy() }
 
     companion object {

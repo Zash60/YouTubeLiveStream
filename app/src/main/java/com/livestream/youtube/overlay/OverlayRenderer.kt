@@ -22,7 +22,7 @@ import java.io.File
  * Renders overlay elements to a canvas.
  * Supports text, image, and timer elements with various styling options.
  */
-class OverlayRenderer(context: Context) : View(context) {
+open class OverlayRenderer(context: Context) : View(context) {
 
     private val elements = mutableListOf<OverlayElement>()
     private var selectedElementId: String? = null
@@ -292,7 +292,7 @@ class OverlayRenderer(context: Context) : View(context) {
         }
     }
 
-    private fun getElementBounds(element: OverlayElement): RectF {
+    protected fun getElementBounds(element: OverlayElement): RectF {
         val screenWidth = width.toFloat()
         val screenHeight = height.toFloat()
 

@@ -7,6 +7,15 @@ import java.util.UUID
  * Viewer count overlay element for displaying live viewer count.
  */
 data class ViewerCountOverlayElement(
+    val id: String = UUID.randomUUID().toString(),
+    var x: Float = 0.1f,
+    var y: Float = 0.1f,
+    var width: Float = 0.2f,
+    var height: Float = 0.1f,
+    var rotation: Float = 0f,
+    var opacity: Float = 1f,
+    var isVisible: Boolean = true,
+    var zIndex: Int = 0,
     var fontFamily: String = "monospace",
     var fontSize: Int = 24,
     var textColor: Int = Color.WHITE,
@@ -15,32 +24,20 @@ data class ViewerCountOverlayElement(
     var showIcon: Boolean = true,
     var iconType: IconType = IconType.EYE,
     var viewerValue: String = "0" // Dynamic viewer count value
-) : OverlayElement() {
+) : OverlayElement(
+    id = id,
+    x = x,
+    y = y,
+    width = width,
+    height = height,
+    rotation = rotation,
+    opacity = opacity,
+    isVisible = isVisible,
+    zIndex = zIndex
+) {
 
     override val type: String
         get() = TYPE_VIEWER_COUNT
-
-    override fun copy(): ViewerCountOverlayElement {
-        return ViewerCountOverlayElement(
-            id = id,
-            x = x,
-            y = y,
-            width = width,
-            height = height,
-            rotation = rotation,
-            opacity = opacity,
-            isVisible = isVisible,
-            zIndex = zIndex,
-            fontFamily = fontFamily,
-            fontSize = fontSize,
-            textColor = textColor,
-            backgroundColor = backgroundColor,
-            hasShadow = hasShadow,
-            showIcon = showIcon,
-            iconType = iconType,
-            viewerValue = viewerValue
-        )
-    }
 
     enum class IconType(val emoji: String) {
         EYE("👁️"),

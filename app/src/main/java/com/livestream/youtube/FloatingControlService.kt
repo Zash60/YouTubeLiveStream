@@ -132,9 +132,9 @@ class FloatingControlService : Service() {
 
         // Load overlay configuration from storage
         val storageManager = OverlayStorageManager(this)
-        val savedConfig = storageManager.loadConfiguration()
+        val savedConfig = storageManager.loadActiveConfiguration()
 
-        if (savedConfig.elements.isEmpty()) {
+        if (savedConfig == null || savedConfig.elements.isEmpty()) {
             // Add default viewer count element
             overlayManager?.addElement(ViewerCountOverlayElement.createDefault())
         } else {
