@@ -126,7 +126,7 @@ class RecordingService(private val context: Context) {
             val extension = if (currentFormat == FORMAT_MP4) "mp4" else "mkv"
             val fileName = generateFileName(extension)
             
-            mediaRecorder = MediaRecorder().apply {
+            mediaRecorder = MediaRecorder(context).apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
                 setVideoSource(MediaRecorder.VideoSource.SURFACE)
                 // Note: MKV format uses MPEG_4 container format internally

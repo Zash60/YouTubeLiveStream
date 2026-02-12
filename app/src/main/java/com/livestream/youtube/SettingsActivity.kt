@@ -123,6 +123,7 @@ class SettingsActivity : AppCompatActivity() {
     private fun loadSettings() {
         val prefs = getSharedPreferences("video_settings", Context.MODE_PRIVATE)
 
+        @Suppress("UNCHECKED_CAST")
         fun setSpinnerSelection(spinner: android.widget.Spinner, value: String) {
             val adapter = spinner.adapter as ArrayAdapter<String>
             val position = adapter.getPosition(value)
