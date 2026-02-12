@@ -80,24 +80,26 @@ class SettingsActivity : AppCompatActivity() {
             Toast.makeText(this, R.string.image_removed, Toast.LENGTH_SHORT).show()
         }
 
-        val simpleLayout = android.R.layout.simple_spinner_dropdown_item
+        // Setup custom spinner dropdown
+        val dropdownItemLayout = R.layout.item_spinner_dropdown
+        
         val resolutions = arrayOf("1920x1080", "1280x720", "854x480", "640x360")
-        binding.spinnerResolution.adapter = ArrayAdapter(this, simpleLayout, resolutions)
+        binding.spinnerResolution.adapter = ArrayAdapter(this, dropdownItemLayout, resolutions)
 
         val fpsOptions = arrayOf("60", "30", "24")
-        binding.spinnerFps.adapter = ArrayAdapter(this, simpleLayout, fpsOptions)
+        binding.spinnerFps.adapter = ArrayAdapter(this, dropdownItemLayout, fpsOptions)
 
         val videoBitrateOptions = arrayOf("8000", "6000", "4500", "4000", "3000", "2500", "2000", "1500")
-        binding.spinnerVideoBitrate.adapter = ArrayAdapter(this, simpleLayout, videoBitrateOptions)
+        binding.spinnerVideoBitrate.adapter = ArrayAdapter(this, dropdownItemLayout, videoBitrateOptions)
 
         val audioBitrateOptions = arrayOf("320", "256", "192", "128", "96")
-        binding.spinnerAudioBitrate.adapter = ArrayAdapter(this, simpleLayout, audioBitrateOptions)
+        binding.spinnerAudioBitrate.adapter = ArrayAdapter(this, dropdownItemLayout, audioBitrateOptions)
 
         val sampleRateOptions = arrayOf("48000", "44100", "22050")
-        binding.spinnerSampleRate.adapter = ArrayAdapter(this, simpleLayout, sampleRateOptions)
+        binding.spinnerSampleRate.adapter = ArrayAdapter(this, dropdownItemLayout, sampleRateOptions)
 
         val codecs = arrayOf("H.264 (Padrao)", "H.265 (HEVC - Alta Qualidade)")
-        binding.spinnerCodec.adapter = ArrayAdapter(this, simpleLayout, codecs)
+        binding.spinnerCodec.adapter = ArrayAdapter(this, dropdownItemLayout, codecs)
 
         // Recording quality options
         val recordingQualityOptions = arrayOf(

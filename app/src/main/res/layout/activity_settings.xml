@@ -94,6 +94,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:background="@drawable/spinner_background"
+                    android:popupBackground="@drawable/spinner_popup_background"
                     android:layout_marginBottom="16dp"/>
 
                 <!-- Formato da Gravacao -->
@@ -109,6 +110,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:background="@drawable/spinner_background"
+                    android:popupBackground="@drawable/spinner_popup_background"
                     android:layout_marginBottom="16dp"/>
 
                 <!-- URL de Alertas -->
@@ -242,6 +244,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:background="@drawable/spinner_background"
+                    android:popupBackground="@drawable/spinner_popup_background"
                     android:layout_marginBottom="16dp"/>
 
                 <!-- Resolucao -->
@@ -257,6 +260,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:background="@drawable/spinner_background"
+                    android:popupBackground="@drawable/spinner_popup_background"
                     android:layout_marginBottom="16dp"/>
 
                 <!-- FPS -->
@@ -272,6 +276,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:background="@drawable/spinner_background"
+                    android:popupBackground="@drawable/spinner_popup_background"
                     android:layout_marginBottom="16dp"/>
 
                 <!-- Bitrate Video -->
@@ -287,6 +292,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:background="@drawable/spinner_background"
+                    android:popupBackground="@drawable/spinner_popup_background"
                     android:layout_marginBottom="16dp"/>
 
                 <!-- Bitrate Audio -->
@@ -302,6 +308,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:background="@drawable/spinner_background"
+                    android:popupBackground="@drawable/spinner_popup_background"
                     android:layout_marginBottom="16dp"/>
 
                 <!-- Taxa de Amostragem -->
@@ -316,7 +323,8 @@
                     android:id="@+id/spinnerSampleRate"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
-                    android:background="@drawable/spinner_background"/>
+                    android:background="@drawable/spinner_background"
+                    android:popupBackground="@drawable/spinner_popup_background"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
