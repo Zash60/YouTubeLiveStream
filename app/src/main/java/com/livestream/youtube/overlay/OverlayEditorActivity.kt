@@ -43,7 +43,7 @@ class OverlayEditorActivity : AppCompatActivity(), OverlayCanvasView.OnElementIn
         uri?.let { selectedUri ->
             (selectedElement as? ImageOverlayElement)?.let { element ->
                 element.imagePath = selectedUri.toString()
-                elementManager.updateElement(element.id) { element }
+                elementManager.updateElement(element.id) { it }
                 updateCanvas()
                 showSnackbar(getString(R.string.image_selected))
             }

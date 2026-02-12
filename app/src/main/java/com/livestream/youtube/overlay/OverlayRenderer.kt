@@ -49,7 +49,7 @@ open class OverlayRenderer @JvmOverloads constructor(
         style = Paint.Style.FILL
     }
     private val imagePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        filterBitmap = true
+        isFilterBitmap = true
     }
 
     // Reusable RectF for drawing
