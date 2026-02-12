@@ -21,7 +21,7 @@
     <string name="stream_key_label">Chave de transmissão</string>
     <string name="stream_key_hint">xxxx-xxxx-xxxx-xxxx-xxxx</string>
     <string name="orientation_label">Orientação da Live</string>
-    <string name="login_google">Criar Live com Google</string>
+    <string name="login_google">Configurar Live no YouTube</string>
     <string name="start_stream">Iniciar Transmissão</string>
     <string name="stop_stream">Parar Transmissão</string>
     <string name="settings_audio">Configurações e Áudio</string>

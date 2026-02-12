@@ -741,7 +741,13 @@ class OverlayEditorActivity : AppCompatActivity(), OverlayCanvasView.OnElementIn
                 is ViewerCountOverlayElement -> "Viewers"
                 else -> "Element"
             }
-            holder.tvElementType.text = getElementTypeName(element)
+            holder.tvElementType.text = when (element) {
+                is TextOverlayElement -> "Text"
+                is ImageOverlayElement -> "Image"
+                is TimerOverlayElement -> "Timer"
+                is ViewerCountOverlayElement -> "Viewers"
+                else -> "Unknown"
+            }
             holder.btnVisibility.alpha = if (element.isVisible) 1f else 0.3f
 
             holder.itemView.setOnClickListener { onElementClick(element) }

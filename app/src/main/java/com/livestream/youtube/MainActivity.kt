@@ -21,6 +21,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.livestream.youtube.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -29,6 +31,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mediaProjectionManager: MediaProjectionManager
     private var isStreaming = false
     private var isRecording = false
+    private var isGoogleConnected = false
 
     private val screenCaptureRequest = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
@@ -51,6 +54,26 @@ class MainActivity : AppCompatActivity() {
         loadSavedSettings()
         // Enable full screen immersive mode
         enableImmersiveMode()
+        // Check for existing Google account
+        checkGoogleSignIn()
+    }
+
+    private fun checkGoogleSignIn() {
+        // Check if user is already signed in
+        val account = GoogleSignIn.getLastSignedInAccount(this)
+        if (account != null) {
+            // User is already signed in
+            isGoogleConnected = true
+            updateGoogleButtonState()
+        }
+    }
+
+    private fun updateGoogleButtonState() {
+        if (isGoogleConnected) {
+            binding.btnLoginGoogle.text = getString(R.string.login_google) + " ✓"
+        } else {
+            binding.btnLoginGoogle.text = getString(R.string.login_google)
+        }
     }
 
     private fun enableImmersiveMode() {
@@ -80,7 +103,10 @@ class MainActivity : AppCompatActivity() {
         // 2. Recarrega as chaves (caso tenham mudado via Google Login)
         loadSavedSettings()
 
-        // 3. Verifica se deve iniciar automaticamente (vindo do Google Login)
+        // 3. Check Google sign-in status
+        checkGoogleSignIn()
+
+        // 4. Verifica se deve iniciar automaticamente (vindo do Google Login)
         if (intent?.getBooleanExtra("AUTO_START_STREAM", false) == true) {
             if (!isStreaming) {
                 // Limpa o flag para nao ficar iniciando em loop se girar a tela

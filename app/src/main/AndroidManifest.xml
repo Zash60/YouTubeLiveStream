@@ -59,7 +59,7 @@
             android:name=".StreamingService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="mediaProjection|mediaProcessing" />
+            android:foregroundServiceType="mediaProjection" />
 
         <service
             android:name=".FloatingControlService"
