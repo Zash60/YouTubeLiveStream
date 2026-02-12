@@ -7,15 +7,15 @@ import java.util.UUID
  * Provides common properties for positioning, sizing, and visibility.
  */
 abstract class OverlayElement(
-    val id: String = UUID.randomUUID().toString(),
-    var x: Float = 0.1f,
-    var y: Float = 0.1f,
-    var width: Float = 0.2f,
-    var height: Float = 0.1f,
-    var rotation: Float = 0f,
-    var opacity: Float = 1f,
-    var isVisible: Boolean = true,
-    var zIndex: Int = 0
+    open val id: String = UUID.randomUUID().toString(),
+    open var x: Float = 0.1f,
+    open var y: Float = 0.1f,
+    open var width: Float = 0.2f,
+    open var height: Float = 0.1f,
+    open var rotation: Float = 0f,
+    open var opacity: Float = 1f,
+    open var isVisible: Boolean = true,
+    open var zIndex: Int = 0
 ) {
     /**
      * Returns the type identifier for serialization.

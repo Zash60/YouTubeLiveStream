@@ -3,19 +3,16 @@ package com.livestream.youtube.model.overlay
 import android.graphics.Color
 import java.util.UUID
 
-/**
- * Timer overlay element with customizable format and styling.
- */
 data class TimerOverlayElement(
-    val id: String = UUID.randomUUID().toString(),
-    var x: Float = 0.1f,
-    var y: Float = 0.1f,
-    var width: Float = 0.2f,
-    var height: Float = 0.1f,
-    var rotation: Float = 0f,
-    var opacity: Float = 1f,
-    var isVisible: Boolean = true,
-    var zIndex: Int = 0,
+    override val id: String = UUID.randomUUID().toString(),
+    override var x: Float = 0.1f,
+    override var y: Float = 0.1f,
+    override var width: Float = 0.2f,
+    override var height: Float = 0.1f,
+    override var rotation: Float = 0f,
+    override var opacity: Float = 1f,
+    override var isVisible: Boolean = true,
+    override var zIndex: Int = 0,
     var format: TimerFormat = TimerFormat.HH_MM_SS,
     var direction: TimerDirection = TimerDirection.UP,
     var startTime: Long = System.currentTimeMillis(),
@@ -41,16 +38,40 @@ data class TimerOverlayElement(
     override val type: String
         get() = TYPE_TIMER
 
+    override fun copy(): TimerOverlayElement {
+        return copy(
+            id = this.id,
+            x = this.x,
+            y = this.y,
+            width = this.width,
+            height = this.height,
+            rotation = this.rotation,
+            opacity = this.opacity,
+            isVisible = this.isVisible,
+            zIndex = this.zIndex,
+            format = this.format,
+            direction = this.direction,
+            startTime = this.startTime,
+            fontFamily = this.fontFamily,
+            fontSize = this.fontSize,
+            textColor = this.textColor,
+            backgroundColor = this.backgroundColor,
+            hasShadow = this.hasShadow,
+            showLabels = this.showLabels,
+            labelText = this.labelText
+        )
+    }
+
     enum class TimerFormat(val pattern: String, val displayName: String) {
         HH_MM_SS("HH:MM:SS", "Hours:Minutes:Seconds"),
         MM_SS("MM:SS", "Minutes:Seconds"),
         HH_MM("HH:MM", "Hours:Minutes"),
         SS("SS", "Seconds Only"),
-        CUSTOM("%1\$tH:%1\$tM:%1\$tS", "Custom Format")
+        CUSTOM("%1$tH:%1$tM:%1$tS", "Custom Format")
     }
 
     enum class TimerDirection {
-        UP,     // Counts up from start time
-        DOWN    // Counts down to zero
+        UP,
+        DOWN
     }
 }

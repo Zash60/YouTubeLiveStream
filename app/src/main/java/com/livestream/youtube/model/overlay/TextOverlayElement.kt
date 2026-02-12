@@ -3,19 +3,16 @@ package com.livestream.youtube.model.overlay
 import android.graphics.Color
 import java.util.UUID
 
-/**
- * Text overlay element with customizable font, color, and styling.
- */
 data class TextOverlayElement(
-    val id: String = UUID.randomUUID().toString(),
-    var x: Float = 0.1f,
-    var y: Float = 0.1f,
-    var width: Float = 0.2f,
-    var height: Float = 0.1f,
-    var rotation: Float = 0f,
-    var opacity: Float = 1f,
-    var isVisible: Boolean = true,
-    var zIndex: Int = 0,
+    override val id: String = UUID.randomUUID().toString(),
+    override var x: Float = 0.1f,
+    override var y: Float = 0.1f,
+    override var width: Float = 0.2f,
+    override var height: Float = 0.1f,
+    override var rotation: Float = 0f,
+    override var opacity: Float = 1f,
+    override var isVisible: Boolean = true,
+    override var zIndex: Int = 0,
     var text: String = "Sample Text",
     var fontFamily: String = "sans-serif-medium",
     var fontSize: Int = 24,
@@ -43,6 +40,33 @@ data class TextOverlayElement(
 
     override val type: String
         get() = TYPE_TEXT
+
+    override fun copy(): TextOverlayElement {
+        return copy(
+            id = this.id,
+            x = this.x,
+            y = this.y,
+            width = this.width,
+            height = this.height,
+            rotation = this.rotation,
+            opacity = this.opacity,
+            isVisible = this.isVisible,
+            zIndex = this.zIndex,
+            text = this.text,
+            fontFamily = this.fontFamily,
+            fontSize = this.fontSize,
+            textColor = this.textColor,
+            backgroundColor = this.backgroundColor,
+            hasShadow = this.hasShadow,
+            shadowColor = this.shadowColor,
+            shadowRadius = this.shadowRadius,
+            shadowDx = this.shadowDx,
+            shadowDy = this.shadowDy,
+            isBold = this.isBold,
+            isItalic = this.isItalic,
+            alignment = this.alignment
+        )
+    }
 
     enum class TextAlignment {
         LEFT, CENTER, RIGHT

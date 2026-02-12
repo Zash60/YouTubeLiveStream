@@ -3,19 +3,16 @@ package com.livestream.youtube.model.overlay
 import android.graphics.Color
 import java.util.UUID
 
-/**
- * Viewer count overlay element for displaying live viewer count.
- */
 data class ViewerCountOverlayElement(
-    val id: String = UUID.randomUUID().toString(),
-    var x: Float = 0.1f,
-    var y: Float = 0.1f,
-    var width: Float = 0.2f,
-    var height: Float = 0.1f,
-    var rotation: Float = 0f,
-    var opacity: Float = 1f,
-    var isVisible: Boolean = true,
-    var zIndex: Int = 0,
+    override val id: String = UUID.randomUUID().toString(),
+    override var x: Float = 0.1f,
+    override var y: Float = 0.1f,
+    override var width: Float = 0.2f,
+    override var height: Float = 0.1f,
+    override var rotation: Float = 0f,
+    override var opacity: Float = 1f,
+    override var isVisible: Boolean = true,
+    override var zIndex: Int = 0,
     var fontFamily: String = "monospace",
     var fontSize: Int = 24,
     var textColor: Int = Color.WHITE,
@@ -23,7 +20,7 @@ data class ViewerCountOverlayElement(
     var hasShadow: Boolean = true,
     var showIcon: Boolean = true,
     var iconType: IconType = IconType.EYE,
-    var viewerValue: String = "0" // Dynamic viewer count value
+    var viewerValue: String = "0"
 ) : OverlayElement(
     id = id,
     x = x,
@@ -39,6 +36,28 @@ data class ViewerCountOverlayElement(
     override val type: String
         get() = TYPE_VIEWER_COUNT
 
+    override fun copy(): ViewerCountOverlayElement {
+        return copy(
+            id = this.id,
+            x = this.x,
+            y = this.y,
+            width = this.width,
+            height = this.height,
+            rotation = this.rotation,
+            opacity = this.opacity,
+            isVisible = this.isVisible,
+            zIndex = this.zIndex,
+            fontFamily = this.fontFamily,
+            fontSize = this.fontSize,
+            textColor = this.textColor,
+            backgroundColor = this.backgroundColor,
+            hasShadow = this.hasShadow,
+            showIcon = this.showIcon,
+            iconType = this.iconType,
+            viewerValue = this.viewerValue
+        )
+    }
+
     enum class IconType(val emoji: String) {
         EYE("👁️"),
         USERS("👥"),
@@ -47,9 +66,6 @@ data class ViewerCountOverlayElement(
     }
 
     companion object {
-        /**
-         * Creates a default viewer count element positioned at top-right.
-         */
         fun createDefault(): ViewerCountOverlayElement {
             return ViewerCountOverlayElement(
                 x = 0.85f,

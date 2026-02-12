@@ -83,10 +83,9 @@ class OverlayStreamIntegration(private val context: Context) {
             return surface
         }
 
-        // Create standalone surface if streaming not active
-        overlaySurface = Surface()
-        listener?.onSurfaceReady(overlaySurface!!)
-        return overlaySurface
+        // Cannot create standalone surface without SurfaceControl
+        listener?.onSurfaceReleased()
+        return null
     }
 
     /**

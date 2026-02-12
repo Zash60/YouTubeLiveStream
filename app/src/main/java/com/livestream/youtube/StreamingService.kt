@@ -16,8 +16,6 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import android.graphics.Surface
-import android.graphics.SurfaceTexture
-import android.view.Surface
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.pedro.library.rtmp.RtmpDisplay
