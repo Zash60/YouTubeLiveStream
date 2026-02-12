@@ -260,7 +260,7 @@ class OverlayEditorActivity : AppCompatActivity(), OverlayCanvasView.OnElementIn
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser && selectedElement != null) {
                     selectedElement!!.opacity = progress / 100f
-                    elementManager.updateElement(selectedElement!!.id) { it }
+                    elementManager.updateElement(selectedElement!!.id) { updated -> updated }
                     updateCanvas()
                 }
             }

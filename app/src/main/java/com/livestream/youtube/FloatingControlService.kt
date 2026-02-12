@@ -164,7 +164,7 @@ class FloatingControlService : Service() {
         // Update viewer count value in all ViewerCountOverlayElements
         overlayManager?.getAllElements()?.filterIsInstance<ViewerCountOverlayElement>()?.forEach { element ->
             element.viewerValue = count
-            overlayManager?.updateElement(element.id) { it }
+            overlayManager?.updateElement(element.id) { updated -> updated }
         }
         overlayRenderer?.invalidate()
     }
