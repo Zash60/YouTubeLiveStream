@@ -49,6 +49,12 @@
             android:label="@string/settings"
             android:parentActivityName=".MainActivity" />
 
+        <activity
+            android:name=".overlay.OverlayEditorActivity"
+            android:exported="false"
+            android:label="@string/overlay_editor"
+            android:parentActivityName=".SettingsActivity" />
+
         <service
             android:name=".StreamingService"
             android:enabled="true"

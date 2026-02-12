@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="@color/background">
+
+    <!-- Left Toolbar: Element Palette -->
+    <LinearLayout
+        android:layout_width="80dp"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@color/surface"
+        android:padding="8dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/add_element"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:layout_marginBottom="8dp"
+            android:gravity="center"/>
+
+        <!-- Text Element Button -->
+        <LinearLayout
+            android:id="@+id/btnAddText"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:layout_marginBottom="4dp">
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@android:drawable/ic_menu_edit"
+                android:tint="@color/accent_blue"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/text_element"
+                android:textColor="@color/text_secondary"
+                android:textSize="10sp"/>
+        </LinearLayout>
+
+        <!-- Image Element Button -->
+        <LinearLayout
+            android:id="@+id/btnAddImage"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:layout_marginBottom="4dp">
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@android:drawable/ic_menu_gallery"
+                android:tint="@color/accent_blue"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/image_element"
+                android:textColor="@color/text_secondary"
+                android:textSize="10sp"/>
+        </LinearLayout>
+
+        <!-- Timer Element Button -->
+        <LinearLayout
+            android:id="@+id/btnAddTimer"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:layout_marginBottom="4dp">
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@android:drawable/ic_menu_recent_history"
+                android:tint="@color/accent_blue"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/timer_element"
+                android:textColor="@color/text_secondary"
+                android:textSize="10sp"/>
+        </LinearLayout>
+
+        <!-- Viewer Count Button -->
+        <LinearLayout
+            android:id="@+id/btnAddViewerCount"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:layout_marginBottom="4dp">
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@android:drawable/ic_menu_view"
+                android:tint="@color/accent_blue"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/viewer_count_element"
+                android:textColor="@color/text_secondary"
+                android:textSize="10sp"/>
+        </LinearLayout>
+
+        <!-- Chat Element Button -->
+        <LinearLayout
+            android:id="@+id/btnAddChat"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:layout_marginBottom="16dp">
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@android:drawable/ic_menu_send"
+                android:tint="@color/accent_blue"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/chat_element"
+                android:textColor="@color/text_secondary"
+                android:textSize="10sp"/>
+        </LinearLayout>
+
+        <!-- Undo/Redo -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+            <ImageButton
+                android:id="@+id/btnUndo"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/ic_menu_revert"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/undo"/>
+            <ImageButton
+                android:id="@+id/btnRedo"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/ic_menu_rotate"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/redo"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Center: Canvas Preview -->
+    <FrameLayout
+        android:id="@+id/canvasContainer"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="@color/background">
+
+        <com.livestream.youtube.overlay.OverlayCanvasView
+            android:id="@+id/overlayCanvas"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <!-- Preview Mode Toggle -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabPreviewToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:layout_margin="16dp"
+            android:src="@android:drawable/ic_menu_view"
+            android:contentDescription="@string/preview_mode"
+            app:fabSize="mini"
+            app:backgroundTint="@color/surface"/>
+
+    </FrameLayout>
+
+    <!-- Right: Property Editor Panel -->
+    <LinearLayout
+        android:id="@+id/propertyPanel"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@color/surface"
+        android:padding="16dp">
+
+        <!-- Header -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/property_general"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Selected Element Info -->
+        <TextView
+            android:id="@+id/tvSelectedElement"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/no_overlay_selected"
+            android:textColor="@color/text_tertiary"
+            android:textSize="14sp"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- General Properties (Position, Size) -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:id="@+id/propertiesContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <!-- X Position -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=\"X\"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"/>
+                <SeekBar
+                    android:id="@+id/seekbarX"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:max="100"
+                    android:layout_marginBottom="8dp"/>
+
+                <!-- Y Position -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=\"Y\"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"/>
+                <SeekBar
+                    android:id="@+id/seekbarY"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:max="100"
+                    android:layout_marginBottom="8dp"/>
+
+                <!-- Width -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=\"@string/property_size\"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"/>
+                <SeekBar
+                    android:id="@+id/seekbarWidth"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:max="100"
+                    android:layout_marginBottom="8dp"/>
+
+                <!-- Height -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=\"H\"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"/>
+                <SeekBar
+                    android:id="@+id/seekbarHeight"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:max="100"
+                    android:layout_marginBottom="16dp"/>
+
+                <!-- Opacity -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=\"@string/property_opacity\"\n                    android:textColor=\"@color/text_secondary\"\n                    android:textSize=\"12sp\"/>\n                <SeekBar\n                    android:id=\"@+id/seekbarOpacity\"\n                    android:layout_width=\"match_parent\"\n                    android:layout_height=\"wrap_content\"\n                    android:max=\"100\"\n                    android:layout_marginBottom=\"16dp\"/>\n\n                <!-- Visible Toggle -->\n                <LinearLayout\n                    android:layout_width=\"match_parent\"\n                    android:layout_height=\"wrap_content\"\n                    android:orientation=\"horizontal\"\n                    android:gravity=\"center_vertical\">\n                    <TextView\n                        android:layout_width=\"0dp\"\n                        android:layout_height=\"wrap_content\"\n                        android:layout_weight=\"1\"\n                        android:text=\"@string/property_visible\"\n                        android:textColor=\"@color/text_primary\"/>\n                    <Switch\n                        android:id=\"@+id/switchVisible\"\n                        android:layout_width=\"wrap_content\"\n                        android:layout_height=\"wrap_content\"/>\n                </LinearLayout>\n\n            </LinearLayout>\n        </ScrollView>\n\n        <!-- Action Buttons -->\n        <LinearLayout\n            android:layout_width=\"match_parent\"\n            android:layout_height=\"wrap_content\"\n            android:orientation=\"vertical\"\n            android:layout_marginTop=\"16dp\">\n\n            <Button\n                android:id=\"@+id/btnDuplicate\"\n                android:layout_width=\"match_parent\"\n                android:layout_height=\"48dp\"\n                android:text=\"@string/duplicate_element\"\n                android:visibility=\"gone\"\n                android:layout_marginBottom=\"8dp\"/>\n\n            <Button\n                android:id=\"@+id/btnDelete\"\n                android:layout_width=\"match_parent\"\n                android:layout_height=\"48dp\"\n                android:text=\"@string/delete_element\"\n                android:visibility=\"gone\"\n                android:backgroundTint=\"@color/error\"\n                android:layout_marginBottom=\"8dp\"/>\n\n            <Button\n                android:id=\"@+id/btnSave\"\n                android:layout_width=\"match_parent\"\n                android:layout_height=\"56dp\"\n                android:text=\"@string/save_overlay\"\n                android:textStyle=\"bold\"\n                android:backgroundTint=\"@color/success\"/>\n\n        </LinearLayout>\n\n    </LinearLayout>\n\n</LinearLayout>\n

@@ -131,6 +131,15 @@
                     android:textColorHint="@color/text_disabled"
                     android:padding="16dp"
                     android:inputType="textUri"/>
+
+                <Button
+                    android:id="@+id/btnOpenOverlayEditor"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="@string/overlay_editor"
+                    android:textSize="14sp"
+                    android:backgroundTint="@color/accent_blue"
+                    android:layout_marginTop="12dp"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

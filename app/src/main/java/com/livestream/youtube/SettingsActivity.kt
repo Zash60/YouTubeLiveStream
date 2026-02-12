@@ -12,7 +12,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
 import android.widget.ArrayAdapter
-import android.widget.Toast
+import com.livestream.youtube.overlay.OverlayEditorActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -119,6 +119,10 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnSave.setOnClickListener {
             saveSettings()
             finish()
+        }
+
+        binding.btnOpenOverlayEditor.setOnClickListener {
+            startActivity(Intent(this, OverlayEditorActivity::class.java))
         }
     }
 
