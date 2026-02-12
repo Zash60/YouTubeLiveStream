@@ -22,6 +22,7 @@ import java.io.File
 /**
  * Renders overlay elements to a canvas.
  * Supports text, image, and timer elements with various styling options.
+ * Optimized for smooth performance during editing.
  */
 open class OverlayRenderer @JvmOverloads constructor(
     context: Context,
@@ -30,9 +31,12 @@ open class OverlayRenderer @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr) {
 
     private val elements = mutableListOf<OverlayElement>()
+    private var sortedElements: List<OverlayElement> = emptyList()
     private var selectedElementId: String? = null
     private var isEditMode: Boolean = false
+    private var needsSorting = false
 
+    // Reusable paint objects to avoid GC
     private val textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val selectionPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -44,14 +48,23 @@ open class OverlayRenderer @JvmOverloads constructor(
         color = Color.parseColor("#2196F3")
         style = Paint.Style.FILL
     }
-    private val cornerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.WHITE
-        style = Paint.Style.FILL
+    private val imagePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        filterBitmap = true
     }
+
+    // Reusable RectF for drawing
+    private val tempRectF = RectF()
+    private val tempRect = Rect()
+    private val tempMatrix = Matrix()
 
     private val imageCache = mutableMapOf<String, Bitmap>()
     private val scope: CoroutineScope by lazy { CoroutineScope(Dispatchers.Main + SupervisorJob()) }
     private var pendingImages = mutableSetOf<String>()
+
+    init {
+        // Enable hardware acceleration for better performance
+        setLayerType(LAYER_TYPE_HARDWARE, null)
+    }
 
     /**
      * Sets the elements to render.
@@ -59,6 +72,7 @@ open class OverlayRenderer @JvmOverloads constructor(
     fun setElements(newElements: List<OverlayElement>) {
         elements.clear()
         elements.addAll(newElements.filter { it.isVisible })
+        needsSorting = true
         preloadImages()
         invalidate()
     }
@@ -92,8 +106,11 @@ open class OverlayRenderer @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        // Sort by z-index for proper layering
-        val sortedElements = elements.sortedBy { it.zIndex }
+        // Sort only when needed (not every frame)
+        if (needsSorting) {
+            sortedElements = elements.sortedBy { it.zIndex }
+            needsSorting = false
+        }
 
         for (element in sortedElements) {
             when (element) {
@@ -111,7 +128,7 @@ open class OverlayRenderer @JvmOverloads constructor(
     }
 
     private fun drawTextElement(canvas: Canvas, element: TextOverlayElement) {
-        val bounds = getElementBounds(element)
+        val bounds = getElementBounds(element, tempRectF)
 
         // Draw background if set
         if (element.backgroundColor != Color.TRANSPARENT) {
@@ -149,7 +166,7 @@ open class OverlayRenderer @JvmOverloads constructor(
     }
 
     private fun drawImageElement(canvas: Canvas, element: ImageOverlayElement) {
-        val bounds = getElementBounds(element)
+        val bounds = getElementBounds(element, tempRectF)
         val bitmap = imageCache[element.imagePath]
 
         if (bitmap != null && !bitmap.isRecycled) {
@@ -157,9 +174,11 @@ open class OverlayRenderer @JvmOverloads constructor(
             canvas.rotate(element.rotation, bounds.centerX(), bounds.centerY())
 
             // Apply opacity
-            val matrix = Matrix()
-            val srcRect = Rect(0, 0, bitmap.width, bitmap.height)
-            val dstRect = RectF(bounds)
+            imagePaint.alpha = (element.opacity * 255).toInt()
+
+            val srcRect = tempRect.apply {
+                set(0, 0, bitmap.width, bitmap.height)
+            }
 
             when (element.scaleType) {
                 ImageOverlayElement.ScaleType.FIT_CENTER -> {
@@ -169,8 +188,9 @@ open class OverlayRenderer @JvmOverloads constructor(
                     )
                     val scaledWidth = bitmap.width * scale
                     val scaledHeight = bitmap.height * scale
-                    matrix.setScale(scale, scale)
-                    matrix.postTranslate(
+                    tempMatrix.reset()
+                    tempMatrix.setScale(scale, scale)
+                    tempMatrix.postTranslate(
                         bounds.left + (bounds.width() - scaledWidth) / 2,
                         bounds.top + (bounds.height() - scaledHeight) / 2
                     )
@@ -180,31 +200,34 @@ open class OverlayRenderer @JvmOverloads constructor(
                         bounds.width() / bitmap.width,
                         bounds.height() / bitmap.height
                     )
-                    matrix.setScale(scale, scale)
-                    matrix.postTranslate(
+                    tempMatrix.reset()
+                    tempMatrix.setScale(scale, scale)
+                    tempMatrix.postTranslate(
                         bounds.left - (bitmap.width * scale - bounds.width()) / 2,
                         bounds.top - (bitmap.height * scale - bounds.height()) / 2
                     )
                 }
                 ImageOverlayElement.ScaleType.STRETCH -> {
-                    matrix.setScale(bounds.width() / bitmap.width, bounds.height() / bitmap.height)
-                    matrix.postTranslate(bounds.left, bounds.top)
+                    tempMatrix.reset()
+                    tempMatrix.setScale(bounds.width() / bitmap.width, bounds.height() / bitmap.height)
+                    tempMatrix.postTranslate(bounds.left, bounds.top)
                 }
                 ImageOverlayElement.ScaleType.CENTER -> {
-                    matrix.postTranslate(
+                    tempMatrix.reset()
+                    tempMatrix.postTranslate(
                         bounds.left + (bounds.width() - bitmap.width) / 2,
                         bounds.top + (bounds.height() - bitmap.height) / 2
                     )
                 }
             }
 
-            canvas.drawBitmap(bitmap, matrix, Paint().apply { alpha = (element.opacity * 255).toInt() })
+            canvas.drawBitmap(bitmap, tempMatrix, imagePaint)
             canvas.restore()
         }
     }
 
     private fun drawTimerElement(canvas: Canvas, element: TimerOverlayElement) {
-        val bounds = getElementBounds(element)
+        val bounds = getElementBounds(element, tempRectF)
 
         // Draw background if set
         if (element.backgroundColor != Color.TRANSPARENT) {
@@ -248,7 +271,7 @@ open class OverlayRenderer @JvmOverloads constructor(
     }
 
     private fun drawViewerCountElement(canvas: Canvas, element: ViewerCountOverlayElement) {
-        val bounds = getElementBounds(element)
+        val bounds = getElementBounds(element, tempRectF)
 
         // Draw background if set
         if (element.backgroundColor != Color.TRANSPARENT) {
@@ -282,7 +305,7 @@ open class OverlayRenderer @JvmOverloads constructor(
     }
 
     private fun drawSelectionOverlay(canvas: Canvas, element: OverlayElement) {
-        val bounds = getElementBounds(element)
+        val bounds = getElementBounds(element, tempRectF)
 
         // Draw selection border
         canvas.drawRoundRect(bounds, 4f, 4f, selectionPaint)
@@ -303,7 +326,7 @@ open class OverlayRenderer @JvmOverloads constructor(
         }
     }
 
-    protected fun getElementBounds(element: OverlayElement): RectF {
+    protected fun getElementBounds(element: OverlayElement, rect: RectF = tempRectF): RectF {
         val screenWidth = width.toFloat()
         val screenHeight = height.toFloat()
 
@@ -312,7 +335,8 @@ open class OverlayRenderer @JvmOverloads constructor(
         val right = left + (element.width * screenWidth)
         val bottom = top + (element.height * screenHeight)
 
-        return RectF(left, top, right, bottom)
+        rect.set(left, top, right, bottom)
+        return rect
     }
 
     private fun formatTime(millis: Long, format: TimerOverlayElement.TimerFormat): String {

@@ -179,4 +179,19 @@
     <string name="confirm_clear_all">Tem certeza que deseja limpar todos os elementos?</string>
     <string name="yes">Sim</string>
     <string name="no">Nao</string>
+
+    <!-- Overlay Editor New Strings -->
+    <string name="elements_list">Elementos</string>
+    <string name="element_added">%1$s adicionado</string>
+    <string name="element_deleted">Elemento excluido</string>
+    <string name="element_duplicated">Elemento duplicado</string>
+    <string name="element_brought_front">Trazido para frente</string>
+    <string name="element_sent_back">Enviado para tras</string>
+    <string name="confirm_delete_element">Excluir este elemento?</string>
+    <string name="edit_text">Editar Texto</string>
+    <string name="text_updated">Texto atualizado</string>
+    <string name="select_color">Selecionar Cor</string>
+    <string name="image_selected">Imagem selecionada</string>
+    <string name="scale_type">Tipo de Escala</string>
+    <string name="icon_type">Tipo de Icone</string>
 </resources>

@@ -2,6 +2,7 @@ package com.livestream.youtube.overlay
 
 import android.content.Context
 import android.graphics.PointF
+import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -10,6 +11,7 @@ import com.livestream.youtube.model.overlay.*
 /**
  * Canvas view for editing overlay elements with touch support.
  * Handles drag, resize, and selection of elements.
+ * Optimized for smooth touch interaction.
  */
 class OverlayCanvasView @JvmOverloads constructor(
     context: Context,
@@ -34,7 +36,15 @@ class OverlayCanvasView @JvmOverloads constructor(
     private val elementStart = PointF()
     private val elementStartSize = PointF()
 
+    // Cached bounds for hit testing
+    private val cachedBounds = mutableMapOf<String, RectF>()
+    private val tempBounds = RectF()
+
     private val handleSize = 48f // Hit area for resize handles
+
+    // Throttle for move events
+    private var lastMoveTime = 0L
+    private val moveThrottleMs = 16L // ~60fps
 
     /**
      * Sets the interaction listener.
@@ -49,6 +59,7 @@ class OverlayCanvasView @JvmOverloads constructor(
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 touchStart.set(event.x, event.y)
+                lastMoveTime = System.currentTimeMillis()
 
                 // Check if touching a resize handle
                 if (selectedElement != null) {
@@ -78,6 +89,13 @@ class OverlayCanvasView @JvmOverloads constructor(
             }
 
             MotionEvent.ACTION_MOVE -> {
+                // Throttle move events for better performance
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastMoveTime < moveThrottleMs) {
+                    return true
+                }
+                lastMoveTime = currentTime
+
                 if (isDragging && selectedElement != null) {
                     val dx = (event.x - touchStart.x) / width
                     val dy = (event.y - touchStart.y) / height
@@ -120,6 +138,8 @@ class OverlayCanvasView @JvmOverloads constructor(
                 isDragging = false
                 isResizing = false
                 resizeHandleIndex = -1
+                // Clear cached bounds on touch end
+                cachedBounds.clear()
             }
         }
 
@@ -128,6 +148,7 @@ class OverlayCanvasView @JvmOverloads constructor(
 
     /**
      * Finds the element at the given point.
+     * Uses cached bounds for better performance.
      */
     private fun findElementAtPoint(x: Float, y: Float): OverlayElement? {
         val screenWidth = width.toFloat()
@@ -135,13 +156,29 @@ class OverlayCanvasView @JvmOverloads constructor(
 
         // Search in reverse z-index order (top elements first)
         return getAllElements().sortedByDescending { it.zIndex }.firstOrNull { element ->
-            val left = element.x * screenWidth
-            val top = element.y * screenHeight
-            val right = left + (element.width * screenWidth)
-            val bottom = top + (element.height * screenHeight)
-
-            x >= left && x <= right && y >= top && y <= bottom
+            val bounds = getElementBoundsCached(element, screenWidth, screenHeight)
+            x >= bounds.left && x <= bounds.right && y >= bounds.top && y <= bounds.bottom
         }
+    }
+
+    /**
+     * Gets cached bounds for an element to avoid repeated calculations.
+     */
+    private fun getElementBoundsCached(element: OverlayElement, screenWidth: Float, screenHeight: Float): RectF {
+        // Use cached bounds if available and element hasn't changed
+        val cached = cachedBounds[element.id]
+        if (cached != null) {
+            return cached
+        }
+
+        val left = element.x * screenWidth
+        val top = element.y * screenHeight
+        val right = left + (element.width * screenWidth)
+        val bottom = top + (element.height * screenHeight)
+
+        val bounds = RectF(left, top, right, bottom)
+        cachedBounds[element.id] = bounds
+        return bounds
     }
 
     /**
@@ -151,7 +188,7 @@ class OverlayCanvasView @JvmOverloads constructor(
     private fun getTouchedHandleIndex(x: Float, y: Float): Int {
         if (selectedElement == null) return -1
 
-        val bounds = getElementBounds(selectedElement!!)
+        val bounds = getElementBounds(selectedElement!!, tempBounds)
         val handleHalfSize = handleSize / 2
 
         val handles = listOf(

@@ -79,9 +79,13 @@ class OverlayElementManager {
         if (saveUndo) {
             pushUndoState()
         }
+        // Directly modify the element (it's a data class with var properties)
         element.x = newX
         element.y = newY
-        configuration = configuration.withUpdatedElement(element)
+        // Only recreate configuration if we need to save undo
+        if (saveUndo) {
+            configuration = configuration.withUpdatedElement(element)
+        }
         return true
     }
 
@@ -98,9 +102,13 @@ class OverlayElementManager {
         if (saveUndo) {
             pushUndoState()
         }
+        // Directly modify the element (it's a data class with var properties)
         element.width = newWidth
         element.height = newHeight
-        configuration = configuration.withUpdatedElement(element)
+        // Only recreate configuration if we need to save undo
+        if (saveUndo) {
+            configuration = configuration.withUpdatedElement(element)
+        }
         return true
     }
 
