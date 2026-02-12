@@ -39,7 +39,8 @@ data class TimerOverlayElement(
         get() = TYPE_TIMER
 
     override fun copy(): TimerOverlayElement {
-        return copy(
+        // Create a new instance directly to avoid recursive call to this method
+        return TimerOverlayElement(
             id = this.id,
             x = this.x,
             y = this.y,

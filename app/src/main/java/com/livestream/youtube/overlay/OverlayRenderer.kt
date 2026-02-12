@@ -216,7 +216,13 @@ open class OverlayRenderer @JvmOverloads constructor(
         val elapsed = System.currentTimeMillis() - element.startTime
         val displayTime = when (element.direction) {
             TimerOverlayElement.TimerDirection.UP -> elapsed
-            TimerOverlayElement.TimerDirection.DOWN -> -elapsed
+            TimerOverlayElement.TimerDirection.DOWN -> {
+                // For countdown, calculate remaining time from a duration
+                // If startTime is in the future, use it as end time
+                // Otherwise, use absolute value for display
+                val remaining = element.startTime - System.currentTimeMillis()
+                maxOf(0L, remaining)
+            }
         }
 
         val timeText = formatTime(displayTime, element.format)
@@ -407,5 +413,13 @@ open class OverlayRenderer @JvmOverloads constructor(
             minOf(textWidth + 16, maxWidth),
             textHeight + 16
         )
+    }
+
+    /**
+     * Gets all elements currently being rendered.
+     * Used by subclasses for hit testing.
+     */
+    protected fun getAllElements(): List<OverlayElement> {
+        return elements.toList()
     }
 }

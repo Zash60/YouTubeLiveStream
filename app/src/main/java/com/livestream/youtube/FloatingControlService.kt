@@ -143,7 +143,7 @@ class FloatingControlService : Service() {
 
         // Get or create container view for renderer
         val containerView = overlayView?.findViewById<ViewGroup>(R.id.overlayContainer)
-            ?: overlayView as ViewGroup
+            ?: (overlayView as? ViewGroup) ?: return
 
         overlayRenderer = OverlayRenderer(this).apply {
             layoutParams = ViewGroup.LayoutParams(

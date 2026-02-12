@@ -37,7 +37,8 @@ data class ViewerCountOverlayElement(
         get() = TYPE_VIEWER_COUNT
 
     override fun copy(): ViewerCountOverlayElement {
-        return copy(
+        // Create a new instance directly to avoid recursive call to this method
+        return ViewerCountOverlayElement(
             id = this.id,
             x = this.x,
             y = this.y,

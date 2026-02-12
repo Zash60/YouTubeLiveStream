@@ -33,7 +33,8 @@ data class ImageOverlayElement(
         get() = TYPE_IMAGE
 
     override fun copy(): ImageOverlayElement {
-        return copy(
+        // Create a new instance directly to avoid recursive call to this method
+        return ImageOverlayElement(
             id = this.id,
             x = this.x,
             y = this.y,

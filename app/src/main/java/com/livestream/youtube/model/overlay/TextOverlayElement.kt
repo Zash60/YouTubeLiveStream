@@ -42,7 +42,8 @@ data class TextOverlayElement(
         get() = TYPE_TEXT
 
     override fun copy(): TextOverlayElement {
-        return copy(
+        // Create a new instance directly to avoid recursive call to this method
+        return TextOverlayElement(
             id = this.id,
             x = this.x,
             y = this.y,

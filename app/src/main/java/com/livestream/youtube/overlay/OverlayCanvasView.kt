@@ -172,14 +172,6 @@ class OverlayCanvasView @JvmOverloads constructor(
     }
 
     /**
-     * Gets all elements from the manager.
-     */
-    private fun getAllElements(): List<OverlayElement> {
-        // Elements are stored in the parent class
-        return emptyList() // Will be overridden by manager
-    }
-
-    /**
      * Updates the selected element.
      */
     fun updateSelectedElement(element: OverlayElement?) {
