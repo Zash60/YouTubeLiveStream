@@ -5,7 +5,7 @@
     android:layout_height="match_parent">
 
     <!-- Container for Overlay Renderer -->
-    <ViewGroup
+    <FrameLayout
         android:id="@+id/overlayContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
