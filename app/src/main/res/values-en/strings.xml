@@ -181,7 +181,6 @@
     <string name="confirm_clear_all">Are you sure you want to clear all elements?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
-    <string name="clear_all">Clear All</string>
     <string name="load_overlay">Load</string>
     <string name="manage_overlays">Manage Overlays</string>
     <string name="overlay_cleared">All elements cleared</string>
@@ -189,6 +188,5 @@
     <string name="delete_overlay">Delete Overlay</string>
     <string name="confirm_delete_overlay">Are you sure you want to delete this overlay?</string>
     <string name="overlay_deleted">Overlay deleted</string>
-    <string name="select_overlay">Select Overlay</string>
     <string name="select_overlay">Select Overlay</string>
 </resources>
