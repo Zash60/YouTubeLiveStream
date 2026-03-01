@@ -32,9 +32,6 @@
     <color name="error">#EF4444</color>
     <color name="warning">#F59E0B</color>
     <color name="divider">#475569</color>
-    <color name="success">#10B981</color>
-    <color name="error">#EF4444</color>
-    <color name="warning">#F59E0B</color>
     
     <!-- Cores do YouTube -->
     <color name="youtube_red">#FF0000</color>
