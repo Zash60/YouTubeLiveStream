@@ -22,8 +22,9 @@ class OverlayStorageManager(context: Context) {
 
     /**
      * Saves an overlay configuration.
+     * @return Pair with success status and error message if failed
      */
-    fun saveConfiguration(config: OverlayConfiguration): Boolean {
+    fun saveConfiguration(config: OverlayConfiguration): Pair<Boolean, String?> {
         return try {
             val configs = getAllConfigurations().toMutableList()
             val existingIndex = configs.indexOfFirst { it.id == config.id }
@@ -34,11 +35,18 @@ class OverlayStorageManager(context: Context) {
             }
             val json = gson.toJson(configs)
             prefs.edit().putString(KEY_CONFIGS, json).apply()
-            true
+            Pair(true, null)
         } catch (e: Exception) {
             e.printStackTrace()
-            false
+            Pair(false, e.message)
         }
+    }
+
+    /**
+     * Saves an overlay configuration (legacy method for compatibility).
+     */
+    fun saveConfigurationLegacy(config: OverlayConfiguration): Boolean {
+        return saveConfiguration(config).first
     }
 
     /**

@@ -9,7 +9,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.EditText
 import android.widget.SeekBar
 import android.widget.TextView
@@ -296,6 +296,32 @@ class OverlayEditorActivity : AppCompatActivity(), OverlayCanvasView.OnElementIn
                     selectElement(newElement)
                     showSnackbar(getString(R.string.element_duplicated))
                 }
+            }
+        }
+
+        // Clear All Button
+        binding.btnClearAll.setOnClickListener {
+            if (elementManager.getAllElements().isNotEmpty()) {
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.clear_all)
+                    .setMessage(R.string.confirm_clear_all)
+                    .setPositiveButton(R.string.yes) { _, _ ->
+                        elementManager.clearAllElements()
+                        updateCanvas()
+                        updateElementList()
+                        clearSelection()
+                        showSnackbar(getString(R.string.overlay_cleared))
+                    }
+                    .setNegativeButton(R.string.no, null)
+                    .show()
+            }
+        }
+
+        // Load Overlay Button
+        binding.btnLoadOverlay.setOnClickListener {
+            showLoadOverlayDialog()
+        }
+    }
             }
         }
     }
@@ -668,13 +694,105 @@ class OverlayEditorActivity : AppCompatActivity(), OverlayCanvasView.OnElementIn
     }
 
     private fun saveConfiguration() {
-        val config = elementManager.getConfiguration()
-        if (storageManager.saveConfiguration(config)) {
-            storageManager.setActiveConfiguration(config.id)
-            Toast.makeText(this, R.string.overlay_saved, Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, R.string.error, Toast.LENGTH_SHORT).show()
+        showSaveOverlayDialog()
+    }
+
+    private fun showSaveOverlayDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_save_overlay, null)
+        val etOverlayName = dialogView.findViewById<EditText>(R.id.etOverlayName)
+        
+        // Pre-fill with current configuration name if exists
+        val currentConfig = elementManager.getConfiguration()
+        if (currentConfig.name.isNotEmpty() && currentConfig.name != "New Overlay") {
+            etOverlayName.setText(currentConfig.name)
         }
+        
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setCancelable(true)
+            .create()
+        
+        dialogView.findViewById<Button>(R.id.btnCancel).setOnClickListener {
+            dialog.dismiss()
+        }
+        
+        dialogView.findViewById<Button>(R.id.btnSave).setOnClickListener {
+            val name = etOverlayName.text.toString().trim()
+            
+            if (name.isEmpty()) {
+                etOverlayName.error = getString(R.string.overlay_name_required)
+                return@setOnClickListener
+            }
+            
+            // Update configuration with new name
+            val config = elementManager.getConfiguration()
+            val updatedConfig = config.copy(
+                name = name,
+                updatedAt = System.currentTimeMillis()
+            )
+            
+            val result = storageManager.saveConfiguration(updatedConfig)
+            if (result.first) {
+                storageManager.setActiveConfiguration(updatedConfig.id)
+                Toast.makeText(this, R.string.overlay_saved, Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            } else {
+                val errorMsg = result.second ?: getString(R.string.error_saving_overlay)
+                Toast.makeText(this, getString(R.string.error_saving_overlay) + ": " + errorMsg, Toast.LENGTH_LONG).show()
+            }
+        }
+        
+        dialog.show()
+    }
+
+    private fun showLoadOverlayDialog() {
+        val configs = storageManager.getAllConfigurations()
+        
+        if (configs.isEmpty()) {
+            Toast.makeText(this, R.string.no_saved_overlays, Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        val names = configs.map { it.name }.toTypedArray()
+        
+        AlertDialog.Builder(this)
+            .setTitle(R.string.select_overlay)
+            .setItems(names) { _, which ->
+                val selectedConfig = configs[which]
+                loadSpecificConfiguration(selectedConfig.id)
+                Toast.makeText(this, R.string.overlay_loaded, Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .setNeutralButton(R.string.delete_overlay) { _, _ ->
+                showDeleteOverlayDialog(configs)
+            }
+            .show()
+    }
+
+    private fun showDeleteOverlayDialog(configs: List<OverlayConfiguration>) {
+        if (configs.isEmpty()) return
+        
+        val names = configs.map { it.name }.toTypedArray()
+        
+        AlertDialog.Builder(this)
+            .setTitle(R.string.delete_overlay)
+            .setItems(names) { _, which ->
+                val selectedConfig = configs[which]
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.delete_overlay)
+                    .setMessage(R.string.confirm_delete_overlay)
+                    .setPositiveButton(R.string.yes) { _, _ ->
+                        storageManager.deleteConfiguration(selectedConfig.id)
+                        Toast.makeText(this, R.string.overlay_deleted, Toast.LENGTH_SHORT).show()
+                    }
+                    .setNegativeButton(R.string.no, null)
+                    .show()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun showSnackbar(message: String) {
     }
 
     private fun showSnackbar(message: String) {

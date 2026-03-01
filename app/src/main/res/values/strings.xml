@@ -175,6 +175,8 @@
     <string name="timer_down">Contagem Regressiva</string>
     <string name="overlay_saved">Overlay salvo com sucesso</string>
     <string name="overlay_loaded">Overlay carregado</string>
+    <string name="overlay_name_required">Nome do overlay e obrigatorio</string>
+    <string name="error_saving_overlay">Erro ao salvar overlay</string>
     <string name="no_overlay_selected">Nenhum elemento selecionado</string>
     <string name="confirm_clear_all">Tem certeza que deseja limpar todos os elementos?</string>
     <string name="yes">Sim</string>
@@ -194,4 +196,14 @@
     <string name="image_selected">Imagem selecionada</string>
     <string name="scale_type">Tipo de Escala</string>
     <string name="icon_type">Tipo de Icone</string>
+    <string name="clear_all">Limpar Tudo</string>
+    <string name="load_overlay">Carregar</string>
+    <string name="manage_overlays">Gerenciar Overlays</string>
+    <string name="overlay_cleared">Todos os elementos foram removidos</string>
+    <string name="no_saved_overlays">Nenhum overlay salvo</string>
+    <string name="delete_overlay">Excluir Overlay</string>
+    <string name="confirm_delete_overlay">Tem certeza que deseja excluir este overlay?</string>
+    <string name="overlay_deleted">Overlay excluido</string>
+    <string name="select_overlay">Selecionar Overlay</string>
+</resources>
 </resources>

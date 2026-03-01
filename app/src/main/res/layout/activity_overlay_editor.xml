@@ -138,6 +138,54 @@
                 android:textSize="10sp"/>
         </LinearLayout>
 
+        <!-- Clear All Button -->
+        <LinearLayout
+            android:id="@+id/btnClearAll"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="4dp"
+            android:layout_marginTop="8dp">
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_delete"
+                android:tint="@color/error"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/clear_all"
+                android:textColor="@color/error"
+                android:textSize="10sp"/>
+        </LinearLayout>
+
+        <!-- Load Overlay Button -->
+        <LinearLayout
+            android:id="@+id/btnLoadOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="4dp"
+            android:layout_marginTop="4dp">
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@android:drawable/ic_menu_upload"
+                android:tint="@color/accent_blue"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/load_overlay"
+                android:textColor="@color/text_secondary"
+                android:textSize="10sp"/>
+        </LinearLayout>
+
+        <!-- Undo/Redo -->
+
         <!-- Undo/Redo -->
         <LinearLayout
             android:layout_width="match_parent"

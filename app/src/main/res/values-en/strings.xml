@@ -175,8 +175,20 @@
     <string name="timer_down">Countdown</string>
     <string name="overlay_saved">Overlay saved successfully</string>
     <string name="overlay_loaded">Overlay loaded</string>
+    <string name="overlay_name_required">Overlay name is required</string>
+    <string name="error_saving_overlay">Error saving overlay</string>
     <string name="no_overlay_selected">No element selected</string>
     <string name="confirm_clear_all">Are you sure you want to clear all elements?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="clear_all">Clear All</string>
+    <string name="load_overlay">Load</string>
+    <string name="manage_overlays">Manage Overlays</string>
+    <string name="overlay_cleared">All elements cleared</string>
+    <string name="no_saved_overlays">No saved overlays</string>
+    <string name="delete_overlay">Delete Overlay</string>
+    <string name="confirm_delete_overlay">Are you sure you want to delete this overlay?</string>
+    <string name="overlay_deleted">Overlay deleted</string>
+    <string name="select_overlay">Select Overlay</string>
+</resources>
 </resources>
