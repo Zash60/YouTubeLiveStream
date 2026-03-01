@@ -126,64 +126,84 @@ class StreamingService : Service() {
     }
 
     private fun startStreaming() {
-        val prefs = getSharedPreferences("stream_settings", Context.MODE_PRIVATE)
-        val rtmpUrl = prefs.getString("rtmp_url", "rtmp://a.rtmp.youtube.com/live2") ?: ""
-        val streamKey = prefs.getString("stream_key", "") ?: ""
+        try {
+            val prefs = getSharedPreferences("stream_settings", Context.MODE_PRIVATE)
+            val rtmpUrl = prefs.getString("rtmp_url", "rtmp://a.rtmp.youtube.com/live2") ?: ""
+            val streamKey = prefs.getString("stream_key", "") ?: ""
 
-        val vPrefs = getSharedPreferences("video_settings", Context.MODE_PRIVATE)
-        var width = vPrefs.getInt("width", 1280)
-        var height = vPrefs.getInt("height", 720)
-        val fps = vPrefs.getInt("fps", 30)
-        targetVideoBitrate = vPrefs.getInt("video_bitrate", 4000) * 1000
-        val audioBitrate = vPrefs.getInt("audio_bitrate", 128) * 1000
-        val sampleRate = vPrefs.getInt("sample_rate", 44100)
-        
-        val useHevc = vPrefs.getBoolean("use_hevc", false)
-        val localRecord = vPrefs.getBoolean("local_record", false)
-        val recordingQuality = vPrefs.getInt("recording_quality", RecordingService.QUALITY_MEDIUM)
-        val recordingFormat = vPrefs.getInt("recording_format", RecordingService.FORMAT_MP4)
-
-        val sysOri = resources.configuration.orientation
-        if (orientationMode == "LANDSCAPE" || (orientationMode == "AUTO" && sysOri == Configuration.ORIENTATION_LANDSCAPE)) {
-            if (width < height) { val t = width; width = height; height = t }
-        } else {
-            if (width > height) { val t = width; width = height; height = t }
-        }
-
-        rtmpDisplay = RtmpDisplay(this, true, connectChecker)
-        rtmpDisplay?.let { display ->
-            data?.let { display.setIntentResult(resultCode, it) }
+            val vPrefs = getSharedPreferences("video_settings", Context.MODE_PRIVATE)
+            var width = vPrefs.getInt("width", 1280)
+            var height = vPrefs.getInt("height", 720)
+            val fps = vPrefs.getInt("fps", 30)
+            targetVideoBitrate = vPrefs.getInt("video_bitrate", 4000) * 1000
+            val audioBitrate = vPrefs.getInt("audio_bitrate", 128) * 1000
+            val sampleRate = vPrefs.getInt("sample_rate", 44100)
             
-            val prepareVideo = display.prepareVideo(width, height, fps, targetVideoBitrate, 0, resources.displayMetrics.densityDpi)
-            val prepareAudio = if (Build.VERSION.SDK_INT >= 29) {
-                try { display.prepareInternalAudio(audioBitrate, sampleRate, true, false, false) } 
-                catch (e: Exception) { display.prepareAudio(audioBitrate, sampleRate, true) }
-            } else {
-                display.prepareAudio(audioBitrate, sampleRate, true)
+            val useHevc = vPrefs.getBoolean("use_hevc", false)
+            val localRecord = vPrefs.getBoolean("local_record", false)
+            val recordingQuality = vPrefs.getInt("recording_quality", RecordingService.QUALITY_MEDIUM)
+            val recordingFormat = vPrefs.getInt("recording_format", RecordingService.FORMAT_MP4)
+
+            // Validação básica
+            if (streamKey.isBlank()) {
+                showToast("Configure a chave de stream primeiro!")
+                stopSelf()
+                return
             }
 
-            if (prepareVideo && prepareAudio) {
-                display.startStream("$rtmpUrl/$streamKey")
+            if (width <= 0 || height <= 0 || fps <= 0) {
+                showToast("Configurações de vídeo inválidas!")
+                stopSelf()
+                return
+            }
+
+            val sysOri = resources.configuration.orientation
+            if (orientationMode == "LANDSCAPE" || (orientationMode == "AUTO" && sysOri == Configuration.ORIENTATION_LANDSCAPE)) {
+                if (width < height) { val t = width; width = height; height = t }
+            } else {
+                if (width > height) { val t = width; width = height; height = t }
+            }
+
+            rtmpDisplay = RtmpDisplay(this, true, connectChecker)
+            rtmpDisplay?.let { display ->
+                data?.let { display.setIntentResult(resultCode, it) }
                 
-                // GRAVAÇÃO LOCAL
-                if (localRecord) {
-                    try {
-                        val format = if (recordingFormat == RecordingService.FORMAT_MP4) "mp4" else "mkv"
-                        val file = File(getExternalFilesDir(null), "rec_${System.currentTimeMillis()}.$format")
-                        display.startRecord(file.absolutePath)
-                        showToast("Gravando: ${file.name}")
-                    } catch (e: Exception) { showToast("Erro gravação: ${e.message}") }
+                val prepareVideo = display.prepareVideo(width, height, fps, targetVideoBitrate, 0, resources.displayMetrics.densityDpi)
+                val prepareAudio = if (Build.VERSION.SDK_INT >= 29) {
+                    try { display.prepareInternalAudio(audioBitrate, sampleRate, true, false, false) } 
+                    catch (e: Exception) { display.prepareAudio(audioBitrate, sampleRate, true) }
+                } else {
+                    display.prepareAudio(audioBitrate, sampleRate, true)
                 }
 
-            } else {
-                stopStreaming()
+                if (prepareVideo && prepareAudio) {
+                    display.startStream("$rtmpUrl/$streamKey")
+                    
+                    // GRAVAÇÃO LOCAL
+                    if (localRecord) {
+                        try {
+                            val format = if (recordingFormat == RecordingService.FORMAT_MP4) "mp4" else "mkv"
+                            val file = File(getExternalFilesDir(null), "rec_${System.currentTimeMillis()}.$format")
+                            display.startRecord(file.absolutePath)
+                            showToast("Gravando: ${file.name}")
+                        } catch (e: Exception) { showToast("Erro gravação: ${e.message}") }
+                    }
+
+                } else {
+                    showToast("Erro ao preparar vídeo/áudio!")
+                    stopStreaming()
+                }
             }
+        } catch (e: Exception) {
+            showToast("Erro: ${e.message}")
+            Log.e("StreamingService", "Erro ao iniciar stream", e)
+            stopSelf()
         }
     }
 
     private val connectChecker = object : ConnectChecker {
         override fun onConnectionStarted(url: String) {}
-        override fun onConnectionSuccess() { isRunning = true; showToast("Conectado! 🟢") }
+        override fun onConnectionSuccess() { isRunning = true; showToast("Conectado!") }
         override fun onConnectionFailed(reason: String) { stopStreaming(); showToast("Falha: $reason") }
         override fun onNewBitrate(bitrate: Long) {
             val color = if (bitrate < targetVideoBitrate * 0.5) "RED" else "GREEN"
