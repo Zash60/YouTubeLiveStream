@@ -27,6 +27,7 @@ class OverlayElementJsonAdapter : JsonSerializer<OverlayElement>, JsonDeserializ
             is ImageOverlayElement -> serializeImageElement(src, json)
             is TimerOverlayElement -> serializeTimerElement(src, json)
             is ViewerCountOverlayElement -> serializeViewerCountElement(src, json)
+            is ChatOverlayElement -> serializeChatElement(src, json)
         }
         return json
     }
@@ -44,6 +45,7 @@ class OverlayElementJsonAdapter : JsonSerializer<OverlayElement>, JsonDeserializ
             OverlayElement.TYPE_IMAGE -> deserializeImageElement(jsonObject)
             OverlayElement.TYPE_TIMER -> deserializeTimerElement(jsonObject)
             OverlayElement.TYPE_VIEWER_COUNT -> deserializeViewerCountElement(jsonObject)
+            OverlayElement.TYPE_CHAT -> deserializeChatElement(jsonObject)
             else -> TextOverlayElement()
         }
     }
@@ -251,6 +253,56 @@ class OverlayElementJsonAdapter : JsonSerializer<OverlayElement>, JsonDeserializ
                 ViewerCountOverlayElement.IconType.EYE
             },
             viewerValue = json.get("viewerValue")?.asString ?: "0"
+        )
+    }
+
+    private fun serializeChatElement(element: ChatOverlayElement, json: JsonObject) {
+        json.addProperty("id", element.id)
+        json.addProperty("x", element.x)
+        json.addProperty("y", element.y)
+        json.addProperty("width", element.width)
+        json.addProperty("height", element.height)
+        json.addProperty("rotation", element.rotation)
+        json.addProperty("opacity", element.opacity)
+        json.addProperty("isVisible", element.isVisible)
+        json.addProperty("zIndex", element.zIndex)
+        json.addProperty("maxMessages", element.maxMessages)
+        json.addProperty("showTimestamps", element.showTimestamps)
+        json.addProperty("fontFamily", element.fontFamily)
+        json.addProperty("fontSize", element.fontSize)
+        json.addProperty("textColor", element.textColor)
+        json.addProperty("backgroundColor", element.backgroundColor)
+        json.addProperty("hasShadow", element.hasShadow)
+        json.addProperty("showBadges", element.showBadges)
+        json.addProperty("messageAnimation", element.messageAnimation.name)
+    }
+
+    private fun deserializeChatElement(json: JsonObject): ChatOverlayElement {
+        return ChatOverlayElement(
+            id = json.get("id")?.asString ?: java.util.UUID.randomUUID().toString(),
+            x = json.get("x")?.asFloat ?: 0.02f,
+            y = json.get("y")?.asFloat ?: 0.5f,
+            width = json.get("width")?.asFloat ?: 0.3f,
+            height = json.get("height")?.asFloat ?: 0.45f,
+            rotation = json.get("rotation")?.asFloat ?: 0f,
+            opacity = json.get("opacity")?.asFloat ?: 1f,
+            isVisible = json.get("isVisible")?.asBoolean ?: true,
+            zIndex = json.get("zIndex")?.asInt ?: 0,
+            maxMessages = json.get("maxMessages")?.asInt ?: 50,
+            showTimestamps = json.get("showTimestamps")?.asBoolean ?: true,
+            fontFamily = json.get("fontFamily")?.asString ?: "sans-serif",
+            fontSize = json.get("fontSize")?.asInt ?: 14,
+            textColor = json.get("textColor")?.asInt ?: android.graphics.Color.WHITE,
+            backgroundColor = json.get("backgroundColor")?.asInt ?: android.graphics.Color.argb(128, 0, 0, 0),
+            hasShadow = json.get("hasShadow")?.asBoolean ?: true,
+            showBadges = json.get("showBadges")?.asBoolean ?: true,
+            messageAnimation = try {
+                ChatOverlayElement.MessageAnimation.valueOf(
+                    json.get("messageAnimation")?.asString ?: "SCROLL"
+                )
+            } catch (e: Exception) {
+                ChatOverlayElement.MessageAnimation.SCROLL
+            }
         )
     }
 }
