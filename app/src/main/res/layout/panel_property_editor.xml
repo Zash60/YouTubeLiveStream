@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Header -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/property_general"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Selected Element Info -->
+        <TextView
+            android:id="@+id/tvSelectedElement"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/no_overlay_selected"
+            android:textColor="@color/text_tertiary"
+            android:textSize="14sp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- General Properties -->
+        <LinearLayout
+            android:id="@+id/propertiesContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <!-- X Position -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="X"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+            <SeekBar
+                android:id="@+id/seekbarX"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="100"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Y Position -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Y"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+            <SeekBar
+                android:id="@+id/seekbarY"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="100"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Width -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/property_size"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+            <SeekBar
+                android:id="@+id/seekbarWidth"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="100"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Height -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="H"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+            <SeekBar
+                android:id="@+id/seekbarHeight"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="100"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Opacity -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/property_opacity"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+            <SeekBar
+                android:id="@+id/seekbarOpacity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="100"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Visible Toggle -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/property_visible"
+                    android:textColor="@color/text_primary" />
+
+                <Switch
+                    android:id="@+id/switchVisible"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- Z-Index -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/property_z_index"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+            <SeekBar
+                android:id="@+id/seekbarZIndex"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="100"
+                android:layout_marginBottom="16dp" />
+
+        </LinearLayout>
+
+        <!-- Action Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="16dp">
+
+            <Button
+                android:id="@+id/btnDuplicate"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="@string/duplicate_element"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btnDelete"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="@string/delete_element"
+                android:visibility="gone"
+                android:backgroundTint="@color/error"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btnBringToFront"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="@string/bring_to_front"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btnSendToBack"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="@string/send_to_back"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>

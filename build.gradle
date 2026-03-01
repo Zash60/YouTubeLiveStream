@@ -1,0 +1,11 @@
+// Project-wide Gradle settings
+plugins {
+    id 'com.android.application' version '8.5.2' apply false
+    id 'com.android.library' version '8.5.2' apply false
+    // ATUALIZAÇÃO: Use a versão 2.2.21 para ser compatível com as bibliotecas do RootEncoder
+    id 'org.jetbrains.kotlin.android' version '2.2.21' apply false
+}
+
+tasks.register('clean', Delete) {
+    delete rootProject.layout.buildDirectory
+}

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema Base Material Design 3 Dark -->
+    <style name="Theme.YouTubeLiveStream" parent="Theme.Material3.Dark.NoActionBar">
+        <!-- Cores principais -->
+        <item name="colorPrimary">@color/youtube_red</item>
+        <item name="colorPrimaryContainer">@color/youtube_dark_red</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorOnPrimaryContainer">@color/text_primary</item>
+        
+        <!-- Cores secundárias -->
+        <item name="colorSecondary">@color/surface_variant</item>
+        <item name="colorSecondaryContainer">@color/surface</item>
+        <item name="colorOnSecondary">@color/text_primary</item>
+        <item name="colorOnSecondaryContainer">@color/text_secondary</item>
+        
+        <!-- Cores de fundo -->
+        <item name="android:windowBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        
+        <!-- Cores de estado -->
+        <item name="colorError">@color/error</item>
+        <item name="colorErrorContainer">@color/error</item>
+        <item name="colorOnError">@color/white</item>
+        <item name="colorOnErrorContainer">@color/white</item>
+        
+        <!-- Status bar e navigation bar - Full Screen -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTranslucentNavigation">false</item>
+        
+        <!-- Enable edge-to-edge display -->
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:enforceStatusBarContrast">false</item>
+        
+        <!-- Typography -->
+        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.YouTubeLiveStream.HeadlineLarge</item>
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.YouTubeLiveStream.HeadlineMedium</item>
+        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.YouTubeLiveStream.HeadlineSmall</item>
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.YouTubeLiveStream.TitleLarge</item>
+        <item name="textAppearanceTitleMedium">@style/TextAppearance.YouTubeLiveStream.TitleMedium</item>
+        <item name="textAppearanceTitleSmall">@style/TextAppearance.YouTubeLiveStream.TitleSmall</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.YouTubeLiveStream.BodyLarge</item>
+        <item name="textAppearanceBodyMedium">@style/TextAppearance.YouTubeLiveStream.BodyMedium</item>
+        <item name="textAppearanceBodySmall">@style/TextAppearance.YouTubeLiveStream.BodySmall</item>
+        <item name="textAppearanceLabelLarge">@style/TextAppearance.YouTubeLiveStream.LabelLarge</item>
+        <item name="textAppearanceLabelMedium">@style/TextAppearance.YouTubeLiveStream.LabelMedium</item>
+        <item name="textAppearanceLabelSmall">@style/TextAppearance.YouTubeLiveStream.LabelSmall</item>
+    </style>
+
+    <!-- Tema com ActionBar (usado nas Configurações) -->
+    <style name="Theme.YouTubeLiveStream.WithActionBar" parent="Theme.YouTubeLiveStream">
+        <item name="windowActionBar">true</item>
+        <item name="windowNoTitle">false</item>
+    </style>
+
+    <!-- Estilos tipográficos personalizados -->
+    <style name="TextAppearance.YouTubeLiveStream.HeadlineLarge" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+    <style name="TextAppearance.YouTubeLiveStream.HeadlineMedium" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+    <style name="TextAppearance.YouTubeLiveStream.HeadlineSmall" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+    <style name="TextAppearance.YouTubeLiveStream.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+    <style name="TextAppearance.YouTubeLiveStream.TitleMedium" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textColor">@color/text_secondary</item>
+    </style>
+    <style name="TextAppearance.YouTubeLiveStream.TitleSmall" parent="TextAppearance.Material3.TitleSmall">
+        <item name="android:textColor">@color/text_secondary</item>
+    </style>
+    <style name="TextAppearance.YouTubeLiveStream.BodyLarge" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+    <style name="TextAppearance.YouTubeLiveStream.BodyMedium" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textColor">@color/text_secondary</item>
+    </style>
+    <style name="TextAppearance.YouTubeLiveStream.BodySmall" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textColor">@color/text_tertiary</item>
+    </style>
+    <style name="TextAppearance.YouTubeLiveStream.LabelLarge" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+    <style name="TextAppearance.YouTubeLiveStream.LabelMedium" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:textColor">@color/text_secondary</item>
+    </style>
+    <style name="TextAppearance.YouTubeLiveStream.LabelSmall" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:textColor">@color/text_tertiary</item>
+    </style>
+</resources>

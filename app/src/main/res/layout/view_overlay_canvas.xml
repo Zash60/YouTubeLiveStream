@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <com.livestream.youtube.overlay.OverlayCanvasView
+        android:id="@+id/overlayCanvas"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Grid overlay for snap-to-grid visualization -->
+    <View
+        android:id="@+id/gridOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <!-- Preview mode indicator -->
+    <TextView
+        android:id="@+id/tvPreviewMode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/spinner_background"
+        android:padding="8dp"
+        android:text="@string/preview_mode"
+        android:textColor="@color/text_primary"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
+</FrameLayout>

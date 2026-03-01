@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">YouTube Live Stream</string>
+
+    <!-- General -->
+    <string name="settings">Configuracoes</string>
+    <string name="offline">Offline</string>
+    <string name="online">AO VIVO</string>
+    <string name="loading">Aguarde...</string>
+    <string name="save">Salvar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="remove">Remover</string>
+    <string name="error">Erro</string>
+    <string name="success">Sucesso</string>
+    <string name="paste">Colar</string>
+
+    <!-- Main Activity -->
+    <string name="rtmp_url_label">URL do servidor RTMP</string>
+    <string name="rtmp_url_hint">rtmp://a.rtmp.youtube.com/live2</string>
+    <string name="stream_key_label">Chave de transmissao</string>
+    <string name="stream_key_hint">xxxx-xxxx-xxxx-xxxx-xxxx</string>
+    <string name="orientation_label">Orientacao da Live</string>
+    <string name="login_google">Configurar Live no YouTube</string>
+    <string name="start_stream">Iniciar Transmissao</string>
+    <string name="stop_stream">Parar Transmissao</string>
+    <string name="settings_audio">Configuracoes e Audio</string>
+    <string name="login_cancelled">Login cancelado</string>
+    <string name="title_required">Digite um titulo</string>
+
+    <!-- Google Login Activity -->
+    <string name="setup_live">Configurar Live</string>
+    <string name="thumbnail_label">Thumbnail (Capa)</string>
+    <string name="select_thumbnail">Escolher Capa</string>
+    <string name="title_label">Titulo</string>
+    <string name="title_hint">Ex: Jogando Minecraft Hardcore</string>
+    <string name="description_label">Descricao</string>
+    <string name="description_hint">Links, redes sociais, sobre a live...</string>
+    <string name="visibility_label">Visibilidade</string>
+    <string name="category_label">Categoria</string>
+    <string name="latency_label">Latencia (Delay)</string>
+    <string name="kids_content_label">Conteudo para criancas (COPPA)?</string>
+    <string name="not_for_kids">Nao (Chat Ativo)</string>
+    <string name="for_kids">Sim (Sem Chat)</string>
+    <string name="connect_create_live">CONECTAR E CRIAR LIVE</string>
+
+    <!-- Settings Activity -->
+    <string name="recording_overlay">Gravacao e Overlay</string>
+    <string name="local_record_label">Gravar Copia Local</string>
+    <string name="local_record_desc">Salva o video na galeria enquanto transmite.</string>
+    <string name="alerts_url_label">URL de Alertas (Streamlabs/Elements)</string>
+    <string name="alerts_url_hint">https://streamlabs.com/alert-box/...</string>
+    <string name="pause_image_label">Imagem de \"Ja Volto\"</string>
+    <string name="no_image_selected">Nenhuma imagem selecionada</string>
+    <string name="select_gallery">Escolher da Galeria</string>
+    <string name="codec_label">Codec de Video</string>
+    <string name="resolution_label">Resolucao</string>
+    <string name="fps_label">FPS</string>
+    <string name="video_bitrate_label">Bitrate Video</string>
+    <string name="audio_bitrate_label">Bitrate Audio</string>
+    <string name="sample_rate_label">Taxa de Amostragem</string>
+    <string name="save_settings">Salvar Configuracoes</string>
+
+    <!-- Widgets -->
+    <string name="chat">Chat</string>
+    <string name="privacy">Privacidade</string>
+    <string name="mute">Mutar</string>
+    <string name="stop_stream_action">Parar Stream</string>
+    <string name="open_menu">Abrir Menu</string>
+    <string name="viewers_count">Online</string>
+
+    <!-- Permissions -->
+    <string name="overlay_permission">Conceda permissao de sobreposicao para o widget</string>
+    <string name="capture_permission">Permissao de captura negada</string>
+    <string name="clipboard_empty">Clipboard vazio</string>
+
+    <!-- Toast Messages -->
+    <string name="stream_key_required">Chave vazia</string>
+    <string name="live_created">Live Criada! Iniciando...</string>
+    <string name="settings_saved">Salvo!</string>
+    <string name="image_removed">Imagem removida</string>
+    <string name="image_active">Imagem Ativa</string>
+
+    <!-- Format Strings -->
+    <string name="login_failed">Falha Login: %1$s</string>
+    <string name="api_error">Erro API: %1$s</string>
+
+    <!-- Live Details -->
+    <string name="live_details">Detalhes da Live</string>
+    <string name="connecting_google">Conectando ao Google...</string>
+    <string name="login_ok">Login OK! Configurando Live...</string>
+    <string name="creating_event">1/4: Criando evento...</string>
+    <string name="uploading_thumbnail">2/4: Enviando capa...</string>
+    <string name="generating_keys">3/4: Gerando chaves...</string>
+    <string name="finishing">4/4: Finalizando...</string>
+
+    <!-- Orientation Options -->
+    <string name="orientation_auto">Automatico</string>
+    <string name="orientation_landscape">Paisagem (Jogos)</string>
+    <string name="orientation_portrait">Retrato</string>
+
+    <!-- Privacy Options -->
+    <string name="privacy_public">Publico</string>
+    <string name="privacy_unlisted">Nao Listado</string>
+    <string name="privacy_private">Privado</string>
+
+    <!-- Category Options -->
+    <string name="category_gaming">Jogos (Gaming)</string>
+    <string name="category_entertainment">Entretenimento</string>
+    <string name="category_people">Pessoas e Blogs</string>
+    <string name="category_science">Ciencia e Tecnologia</string>
+    <string name="category_education">Educacao</string>
+
+    <!-- Latency Options -->
+    <string name="latency_normal">Normal (Melhor Qualidade)</string>
+    <string name="latency_low">Baixa</string>
+    <string name="latency_ultra_low">Ultra Baixa (Melhor Interacao)</string>
+
+    <!-- Recording Quality Options -->
+    <string name="recording_quality_label">Qualidade da Gravacao</string>
+    <string name="recording_quality_high">Alta (1080p)</string>
+    <string name="recording_quality_medium">Media (720p)</string>
+    <string name="recording_quality_low">Baixa (480p)</string>
+    <string name="recording_format_label">Formato de Gravacao</string>
+    <string name="recording_format_mp4">MP4</string>
+    <string name="recording_format_mkv">MKV</string>
+
+    <!-- Recording Status -->
+    <string name="recording_started">Gravacao iniciada</string>
+    <string name="recording_stopped">Gravacao parada</string>
+    <string name="recording_error">Erro na gravacao</string>
+    <string name="recording_saved">Video salvo: %1$s</string>
+
+    <!-- Overlay Editor -->
+    <string name="overlay_editor">Editor de Overlay</string>
+    <string name="overlay_name">Nome do Overlay</string>
+    <string name="overlay_name_hint">Digite um nome</string>
+    <string name="add_element">Adicionar Elemento</string>
+    <string name="text_element">Texto</string>
+    <string name="image_element">Imagem</string>
+    <string name="timer_element">Cronometro</string>
+    <string name="viewer_count_element">Contador</string>
+    <string name="chat_element">Chat</string>
+    <string name="delete_element">Excluir</string>
+    <string name="duplicate_element">Duplicar</string>
+    <string name="bring_to_front">Trazer para frente</string>
+    <string name="send_to_back">Enviar para tras</string>
+    <string name="preview_mode">Previa</string>
+    <string name="edit_mode">Edicao</string>
+    <string name="save_overlay">Salvar Overlay</string>
+    <string name="load_overlay">Carregar Overlay</string>
+    <string name="clear_all">Limpar Tudo</string>
+    <string name="undo">Desfazer</string>
+    <string name="redo">Refazer</string>
+    <string name="property_general">Geral</string>
+    <string name="property_position">Posicao</string>
+    <string name="property_size">Tamanho</string>
+    <string name="property_text">Texto</string>
+    <string name="property_style">Estilo</string>
+    <string name="property_opacity">Opacidade</string>
+    <string name="property_rotation">Rotacao</string>
+    <string name="property_z_index">Camada</string>
+    <string name="property_visible">Visivel</string>
+    <string name="font_size">Tamanho da Fonte</string>
+    <string name="font_family">Fonte</string>
+    <string name="text_color">Cor do Texto</string>
+    <string name="background_color">Cor de Fundo</string>
+    <string name="shadow">Sombra</string>
+    <string name="bold">Negrito</string>
+    <string name="italic">Italico</string>
+    <string name="select_image">Selecionar Imagem</string>
+    <string name="timer_format">Formato</string>
+    <string name="timer_direction">Direcao</string>
+    <string name="timer_up">Cronometro (Cima)</string>
+    <string name="timer_down">Contagem Regressiva</string>
+    <string name="overlay_saved">Overlay salvo com sucesso</string>
+    <string name="overlay_loaded">Overlay carregado</string>
+    <string name="no_overlay_selected">Nenhum elemento selecionado</string>
+    <string name="confirm_clear_all">Tem certeza que deseja limpar todos os elementos?</string>
+    <string name="yes">Sim</string>
+    <string name="no">Nao</string>
+
+    <!-- Overlay Editor New Strings -->
+    <string name="elements_list">Elementos</string>
+    <string name="element_added">%1$s adicionado</string>
+    <string name="element_deleted">Elemento excluido</string>
+    <string name="element_duplicated">Elemento duplicado</string>
+    <string name="element_brought_front">Trazido para frente</string>
+    <string name="element_sent_back">Enviado para tras</string>
+    <string name="confirm_delete_element">Excluir este elemento?</string>
+    <string name="edit_text">Editar Texto</string>
+    <string name="text_updated">Texto atualizado</string>
+    <string name="select_color">Selecionar Cor</string>
+    <string name="image_selected">Imagem selecionada</string>
+    <string name="scale_type">Tipo de Escala</string>
+    <string name="icon_type">Tipo de Icone</string>
+</resources>

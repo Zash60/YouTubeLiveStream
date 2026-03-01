@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Container for Overlay Renderer -->
+    <ViewGroup
+        android:id="@+id/overlayContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- 1. ALERTAS (Streamlabs/Elements) -->
+    <WebView
+        android:id="@+id/webViewAlerts"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent"
+        android:layerType="hardware" />
+
+    <!-- 2. CHAT FLUTUANTE (Canto Inferior Esquerdo) -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvChat"
+        android:layout_width="280dp"
+        android:layout_height="220dp"
+        android:layout_gravity="bottom|start"
+        android:layout_marginBottom="24dp"
+        android:layout_marginStart="12dp" />
+
+</FrameLayout>

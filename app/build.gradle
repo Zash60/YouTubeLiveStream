@@ -1,0 +1,92 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.livestream.youtube'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.livestream.youtube"
+        minSdk 29
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    signingConfigs {
+        release {
+            
+            storeFile file("sua_chave.jks") 
+            storePassword "123456"
+            keyAlias "meualias"
+            keyPassword "123456"
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            debuggable true
+        }
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+    
+    buildFeatures {
+        viewBinding true
+    }
+    
+    packaging {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+            excludes += 'META-INF/DEPENDENCIES'
+            excludes += 'META-INF/LICENSE'
+            excludes += 'META-INF/LICENSE.txt'
+            excludes += 'META-INF/license.txt'
+            excludes += 'META-INF/NOTICE'
+            excludes += 'META-INF/NOTICE.txt'
+            excludes += 'META-INF/notice.txt'
+            excludes += 'META-INF/ASL2.0'
+            excludes += 'META-INF/INDEX.LIST'
+            excludes += 'META-INF/io.netty.versions.properties'
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+    implementation 'androidx.preference:preference-ktx:1.2.1'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1'
+    
+    // RootEncoder
+    implementation 'com.github.pedroSG94.RootEncoder:library:2.6.6'
+
+    // Glide (Imagens do Chat)
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
+
+    // Google Login e YouTube API
+    implementation 'com.google.android.gms:play-services-auth:20.7.0'
+    implementation('com.google.api-client:google-api-client-android:2.2.0') {
+        exclude group: 'org.apache.httpcomponents'
+    }
+    implementation 'com.google.apis:google-api-services-youtube:v3-rev20251217-2.0.0'
+    implementation 'com.google.http-client:google-http-client-gson:1.43.3'
+}
