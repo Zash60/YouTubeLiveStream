@@ -141,7 +141,7 @@ class OverlayStreamIntegration(private val context: Context) {
     /**
      * Saves overlay configuration.
      */
-    fun saveOverlayConfig(config: OverlayConfiguration): Boolean {
+    fun saveOverlayConfig(config: OverlayConfiguration): Pair<Boolean, String?> {
         val storageManager = OverlayStorageManager(context)
         return storageManager.saveConfiguration(config)
     }

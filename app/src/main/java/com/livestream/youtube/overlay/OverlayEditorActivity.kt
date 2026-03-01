@@ -322,9 +322,6 @@ class OverlayEditorActivity : AppCompatActivity(), OverlayCanvasView.OnElementIn
             showLoadOverlayDialog()
         }
     }
-            }
-        }
-    }
 
     private fun setupPropertyPanel() {
         // Position SeekBars
