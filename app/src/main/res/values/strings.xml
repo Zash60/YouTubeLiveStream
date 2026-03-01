@@ -196,8 +196,6 @@
     <string name="image_selected">Imagem selecionada</string>
     <string name="scale_type">Tipo de Escala</string>
     <string name="icon_type">Tipo de Icone</string>
-    <string name="clear_all">Limpar Tudo</string>
-    <string name="load_overlay">Carregar</string>
     <string name="manage_overlays">Gerenciar Overlays</string>
     <string name="overlay_cleared">Todos os elementos foram removidos</string>
     <string name="no_saved_overlays">Nenhum overlay salvo</string>
@@ -205,5 +203,4 @@
     <string name="confirm_delete_overlay">Tem certeza que deseja excluir este overlay?</string>
     <string name="overlay_deleted">Overlay excluido</string>
     <string name="select_overlay">Selecionar Overlay</string>
-</resources>
 </resources>

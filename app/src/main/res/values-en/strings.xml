@@ -190,6 +190,5 @@
     <string name="confirm_delete_overlay">Are you sure you want to delete this overlay?</string>
     <string name="overlay_deleted">Overlay deleted</string>
     <string name="select_overlay">Select Overlay</string>
-</resources>
-</resources>
+    <string name="select_overlay">Select Overlay</string>
 </resources>
