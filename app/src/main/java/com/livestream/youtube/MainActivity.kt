@@ -112,10 +112,23 @@ class MainActivity : AppCompatActivity() {
                 // Limpa o flag para nao ficar iniciando em loop se girar a tela
                 intent?.removeExtra("AUTO_START_STREAM")
                 
-                // Simula o clique no botao para pedir permissao
-                binding.btnStartStream.performClick()
+                // Verifica se tem chave de stream e URL configuradas
+                val prefs = getSharedPreferences("stream_settings", Context.MODE_PRIVATE)
+                val streamKey = prefs.getString("stream_key", "") ?: ""
+                val rtmpUrl = prefs.getString("rtmp_url", "") ?: ""
+                
+                if (streamKey.isBlank()) {
+                    Toast.makeText(this, R.string.stream_key_required, Toast.LENGTH_SHORT).show()
+                } else if (rtmpUrl.isBlank()) {
+                    Toast.makeText(this, "URL RTMP não configurada!", Toast.LENGTH_SHORT).show()
+                } else {
+                    binding.btnStartStream.performClick()
+                }
+                } else {
+                    // Simula o clique no botao para pedir permissao
+                    binding.btnStartStream.performClick()
+                }
             }
-        }
     }
 
     private fun setupUI() {
